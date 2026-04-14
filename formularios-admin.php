@@ -93,9 +93,40 @@ function formularios_admin_dashboard_page() {
         echo '<strong>Total publicados:</strong> ' . intval($count);
         echo '</div>';
 
+        // Contar verificados
+        $verified_count = new WP_Query([
+            'post_type'      => $cpt->name,
+            'post_status'    => 'publish',
+            'posts_per_page' => 1,
+            'meta_query'     => [['key' => '_formulario_verificado', 'value' => '1']],
+            'fields'         => 'ids',
+            'no_found_rows'  => false,
+        ]);
+        $total_verificados = $verified_count->found_posts;
+        wp_reset_postdata();
+
+        echo '<div class="form-meta">';
+        echo '<strong>' . esc_html__('Verificados:', 'formularios-admin') . '</strong> ' . intval($total_verificados);
+        echo '</div>';
+
         echo '<div class="form-buttons">';
         echo '<a href="edit.php?post_type=' . $cpt->name . '">Ver todos</a>';
         echo '<a href="post-new.php?post_type=' . $cpt->name . '">Añadir nuevo</a>';
+
+        // Link al listado público de verificados
+        $archive_link = get_post_type_archive_link($cpt->name);
+        if ($archive_link) {
+            echo '<a href="' . esc_url($archive_link) . '" target="_blank" style="background:#00a32a">Ver verificados</a>';
+        }
+
+        // Link de descarga Excel
+        $excel_url = add_query_arg([
+            'formularios_export' => 'excel',
+            'post_type'          => $cpt->name,
+            'nonce'              => wp_create_nonce('formularios_export_' . $cpt->name),
+        ], admin_url('admin-ajax.php'));
+        echo '<a href="' . esc_url($excel_url) . '" style="background:#135e96">⬇ Descargar Excel</a>';
+
         echo '</div>';
 
         echo '</div>';
@@ -183,3 +214,510 @@ add_action('admin_menu', function () {
         }
     }
 }, 999);
+
+/**
+ * --------------------------------------------------------
+ * 5. Campos de auditoría: verificado, verificado por, observaciones
+ * --------------------------------------------------------
+ */
+
+/**
+ * Determina si un post_type pertenece a los formularios gestionados.
+ */
+function formularios_es_cpt_formulario(string $post_type): bool {
+    global $FORMULARIOS_CPTS;
+    return is_array($FORMULARIOS_CPTS) && in_array($post_type, $FORMULARIOS_CPTS, true);
+}
+
+/**
+ * 5a. Registrar meta box de auditoría en los CPT de formularios.
+ */
+add_action('add_meta_boxes', function () {
+    $screen = get_current_screen();
+    if (!$screen || 'post' !== $screen->base) {
+        return;
+    }
+
+    if (!formularios_es_cpt_formulario($screen->post_type)) {
+        return;
+    }
+
+    add_meta_box(
+        'formularios_auditoria',
+        __('Auditoría', 'formularios-admin'),
+        'formularios_render_auditoria_meta_box',
+        $screen->post_type,
+        'side',
+        'high'
+    );
+});
+
+/**
+ * Renderiza el meta box de auditoría.
+ */
+function formularios_render_auditoria_meta_box(WP_Post $post): void {
+    wp_nonce_field('formularios_auditoria_' . $post->ID, 'formularios_auditoria_nonce');
+
+    $verificado    = (bool) get_post_meta($post->ID, '_formulario_verificado', true);
+    $verificado_por = get_post_meta($post->ID, '_formulario_verificado_por', true);
+    $verificado_at = get_post_meta($post->ID, '_formulario_verificado_at', true);
+    $observaciones = get_post_meta($post->ID, '_formulario_observaciones', true);
+
+    // Checkbox verificado
+    echo '<p>';
+    echo '<label>';
+    echo '<input type="checkbox" name="formulario_verificado" value="1" ' . checked($verificado, true, false) . '> ';
+    echo '<strong>' . esc_html__('Verificado', 'formularios-admin') . '</strong>';
+    echo '</label>';
+    echo '</p>';
+
+    // Info de verificación (solo lectura)
+    if ($verificado && $verificado_por) {
+        $user = get_userdata((int) $verificado_por);
+        $nombre = $user ? $user->display_name : __('Desconocido', 'formularios-admin');
+        echo '<p style="margin-top:4px;color:#00a32a">';
+        echo '✅ <strong>' . esc_html__('Verificado por:', 'formularios-admin') . '</strong> ' . esc_html($nombre);
+        if ($verificado_at) {
+            echo '<br><small>' . esc_html($verificado_at) . '</small>';
+        }
+        echo '</p>';
+    } elseif (!$verificado) {
+        echo '<p style="color:#b32d2e"><small>⏳ ' . esc_html__('Este registro NO es visible en el sitio público hasta ser verificado.', 'formularios-admin') . '</small></p>';
+    }
+
+    // Observaciones
+    echo '<hr style="margin:12px 0">';
+    echo '<p><label for="formulario_observaciones"><strong>' . esc_html__('Observaciones:', 'formularios-admin') . '</strong></label></p>';
+    echo '<textarea id="formulario_observaciones" name="formulario_observaciones" rows="4" style="width:100%">' . esc_textarea($observaciones) . '</textarea>';
+    echo '<p class="description">' . esc_html__('Solo visible para administradores.', 'formularios-admin') . '</p>';
+}
+
+/**
+ * 5b. Guardar los campos de auditoría.
+ */
+add_action('save_post', function (int $post_id, WP_Post $post) {
+    // Verificar nonce
+    if (!isset($_POST['formularios_auditoria_nonce']) ||
+        !wp_verify_nonce($_POST['formularios_auditoria_nonce'], 'formularios_auditoria_' . $post_id)) {
+        return;
+    }
+
+    if (!formularios_es_cpt_formulario($post->post_type)) {
+        return;
+    }
+
+    if (!current_user_can('edit_post', $post_id)) {
+        return;
+    }
+
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+        return;
+    }
+
+    $verificado_anterior = (bool) get_post_meta($post_id, '_formulario_verificado', true);
+    $verificado_nuevo    = !empty($_POST['formulario_verificado']);
+
+    update_post_meta($post_id, '_formulario_verificado', $verificado_nuevo ? '1' : '');
+
+    // Registrar quién verificó y cuándo (solo la primera vez que se marca)
+    if ($verificado_nuevo && !$verificado_anterior) {
+        update_post_meta($post_id, '_formulario_verificado_por', get_current_user_id());
+        update_post_meta($post_id, '_formulario_verificado_at', current_time('mysql'));
+    }
+
+    // Si se desmarca, limpiar datos de verificación
+    if (!$verificado_nuevo && $verificado_anterior) {
+        delete_post_meta($post_id, '_formulario_verificado_por');
+        delete_post_meta($post_id, '_formulario_verificado_at');
+    }
+
+    // Observaciones
+    $observaciones = sanitize_textarea_field(wp_unslash($_POST['formulario_observaciones'] ?? ''));
+    update_post_meta($post_id, '_formulario_observaciones', $observaciones);
+}, 10, 2);
+
+/**
+ * 5c. Solo mostrar registros verificados en consultas públicas (frontend).
+ *     Los registros NO verificados permanecen ocultos para los visitantes.
+ */
+add_action('pre_get_posts', function (WP_Query $query) {
+    if (is_admin() || !$query->is_main_query()) {
+        return;
+    }
+
+    $post_type = $query->get('post_type');
+
+    // Si es un string simple, verificar directamente
+    if (is_string($post_type) && formularios_es_cpt_formulario($post_type)) {
+        $meta_query = $query->get('meta_query') ?: [];
+        $meta_query[] = [
+            'key'   => '_formulario_verificado',
+            'value' => '1',
+        ];
+        $query->set('meta_query', $meta_query);
+        return;
+    }
+
+    // Si es un array de post types, verificar si alguno es de formularios
+    if (is_array($post_type)) {
+        foreach ($post_type as $pt) {
+            if (formularios_es_cpt_formulario($pt)) {
+                $meta_query = $query->get('meta_query') ?: [];
+                $meta_query[] = [
+                    'key'   => '_formulario_verificado',
+                    'value' => '1',
+                ];
+                $query->set('meta_query', $meta_query);
+                return;
+            }
+        }
+    }
+});
+
+/**
+ * 5d. Filtrar también consultas de single posts (publicaciones individuales).
+ */
+add_filter('template_redirect', function () {
+    if (is_admin() || !is_singular()) {
+        return;
+    }
+
+    $post = get_queried_object();
+    if (!$post instanceof WP_Post) {
+        return;
+    }
+
+    if (!formularios_es_cpt_formulario($post->post_type)) {
+        return;
+    }
+
+    $verificado = (bool) get_post_meta($post->ID, '_formulario_verificado', true);
+    if (!$verificado) {
+        global $wp_query;
+        $wp_query->set_404();
+        status_header(404);
+        nocache_headers();
+    }
+});
+
+/**
+ * 5e. Añadir columna "Verificado" en la tabla de listado del admin.
+ */
+add_filter('manage_posts_columns', function (array $columns, string $post_type): array {
+    if (!formularios_es_cpt_formulario($post_type)) {
+        return $columns;
+    }
+
+    // Insertar después de 'title'
+    $new_columns = [];
+    foreach ($columns as $key => $label) {
+        $new_columns[$key] = $label;
+        if ('title' === $key) {
+            $new_columns['formulario_verificado']    = __('Verificado', 'formularios-admin');
+            $new_columns['formulario_observaciones'] = __('Observaciones', 'formularios-admin');
+        }
+    }
+    return $new_columns;
+}, 10, 2);
+
+add_action('manage_posts_custom_column', function (string $column, int $post_id) {
+    if ('formulario_verificado' === $column) {
+        $verificado = (bool) get_post_meta($post_id, '_formulario_verificado', true);
+        if ($verificado) {
+            $user_id = get_post_meta($post_id, '_formulario_verificado_por', true);
+            $user = get_userdata((int) $user_id);
+            $nombre = $user ? $user->display_name : '';
+            echo '<span style="color:#00a32a" title="' . esc_attr($nombre) . '">✅ Sí</span>';
+        } else {
+            echo '<span style="color:#b32d2e">❌ No</span>';
+        }
+    }
+
+    if ('formulario_observaciones' === $column) {
+        $obs = get_post_meta($post_id, '_formulario_observaciones', true);
+        if ($obs) {
+            echo '<span title="' . esc_attr($obs) . '">' . esc_html(wp_trim_words($obs, 10, '…')) . '</span>';
+        } else {
+            echo '<span style="color:#999">—</span>';
+        }
+    }
+}, 10, 2);
+
+/**
+ * 5f. Hacer la columna "Verificado" sortable.
+ */
+add_filter('manage_edit-post_sortable_columns', function (array $columns): array {
+    $columns['formulario_verificado'] = 'formulario_verificado';
+    return $columns;
+});
+
+add_action('pre_get_posts', function (WP_Query $query) {
+    if (!is_admin() || !$query->is_main_query()) {
+        return;
+    }
+
+    if ('formulario_verificado' === $query->get('orderby')) {
+        $query->set('meta_key', '_formulario_verificado');
+        $query->set('orderby', 'meta_value');
+    }
+});
+
+/**
+ * --------------------------------------------------------
+ * 6. Shortcode [formularios_verificados] — listado público de verificados
+ *    Uso: [formularios_verificados post_type="organizacion-esal"]
+ * --------------------------------------------------------
+ */
+add_shortcode('formularios_verificados', function (array $atts = []): string {
+    $atts = shortcode_atts([
+        'post_type' => '',
+    ], $atts, 'formularios_verificados');
+
+    $post_type = sanitize_key($atts['post_type']);
+    if (empty($post_type) || !post_type_exists($post_type)) {
+        return '<p>' . esc_html__('Tipo de formulario no válido.', 'formularios-admin') . '</p>';
+    }
+
+    if (!formularios_es_cpt_formulario($post_type)) {
+        return '<p>' . esc_html__('Este tipo de contenido no es un formulario gestionado.', 'formularios-admin') . '</p>';
+    }
+
+    $paged = max(1, get_query_var('paged', 1));
+    $query = new WP_Query([
+        'post_type'      => $post_type,
+        'post_status'    => 'publish',
+        'posts_per_page' => 20,
+        'paged'          => $paged,
+        'meta_query'     => [['key' => '_formulario_verificado', 'value' => '1']],
+    ]);
+
+    if (!$query->have_posts()) {
+        return '<p>' . esc_html__('No hay registros verificados aún.', 'formularios-admin') . '</p>';
+    }
+
+    $cpt_obj  = get_post_type_object($post_type);
+    $cpt_name = $cpt_obj ? $cpt_obj->labels->name : $post_type;
+
+    // Obtener campos ACF del primer post para construir encabezados
+    $first_post = $query->posts[0];
+    $acf_fields = function_exists('get_field_objects') ? get_field_objects($first_post->ID) : [];
+    if (!is_array($acf_fields)) {
+        $acf_fields = [];
+    }
+
+    // Filtrar solo campos visibles (excluir tabs, messages, etc.)
+    $visible_fields = [];
+    foreach ($acf_fields as $field) {
+        if (in_array($field['type'], ['tab', 'message', 'accordion', 'group'], true)) {
+            continue;
+        }
+        $visible_fields[] = $field;
+    }
+
+    // Limitar a 6 columnas para que sea legible
+    $display_fields = array_slice($visible_fields, 0, 6);
+
+    ob_start();
+
+    // Excel download link
+    $excel_url = add_query_arg([
+        'formularios_export' => 'excel',
+        'post_type'          => $post_type,
+        'nonce'              => wp_create_nonce('formularios_export_' . $post_type),
+    ], home_url('/'));
+
+    echo '<div class="formularios-verificados-wrap">';
+    echo '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">';
+    echo '<h3 style="margin:0">' . esc_html($cpt_name) . ' — ' . esc_html__('Registros Verificados', 'formularios-admin') . ' (' . intval($query->found_posts) . ')</h3>';
+    echo '<a href="' . esc_url($excel_url) . '" style="display:inline-flex;align-items:center;gap:6px;background:#135e96;color:#fff;padding:8px 16px;border-radius:4px;text-decoration:none;font-size:14px">⬇ ' . esc_html__('Descargar Excel', 'formularios-admin') . '</a>';
+    echo '</div>';
+
+    echo '<div style="overflow-x:auto">';
+    echo '<table class="formularios-verificados-table" style="width:100%;border-collapse:collapse;font-size:14px">';
+    echo '<thead><tr style="background:#f0f0f1">';
+    echo '<th style="padding:10px 12px;text-align:left;border-bottom:2px solid #ccd0d4">' . esc_html__('Nombre', 'formularios-admin') . '</th>';
+    foreach ($display_fields as $field) {
+        echo '<th style="padding:10px 12px;text-align:left;border-bottom:2px solid #ccd0d4">' . esc_html($field['label']) . '</th>';
+    }
+    echo '</tr></thead><tbody>';
+
+    while ($query->have_posts()) {
+        $query->the_post();
+        $pid = get_the_ID();
+        echo '<tr style="border-bottom:1px solid #e0e0e0">';
+        echo '<td style="padding:8px 12px"><a href="' . esc_url(get_permalink()) . '">' . esc_html(get_the_title()) . '</a></td>';
+        foreach ($display_fields as $field) {
+            $value = get_field($field['name'], $pid);
+            $display = formularios_format_field_value($value, $field);
+            echo '<td style="padding:8px 12px">' . $display . '</td>';
+        }
+        echo '</tr>';
+    }
+
+    echo '</tbody></table></div>';
+
+    // Paginación
+    $total_pages = $query->max_num_pages;
+    if ($total_pages > 1) {
+        echo '<div style="margin-top:16px;text-align:center">';
+        echo paginate_links([
+            'total'   => $total_pages,
+            'current' => $paged,
+        ]);
+        echo '</div>';
+    }
+
+    echo '</div>';
+    wp_reset_postdata();
+
+    return ob_get_clean();
+});
+
+/**
+ * Formatea un valor de campo ACF para visualización en tabla.
+ */
+function formularios_format_field_value($value, array $field): string {
+    if (is_null($value) || $value === '' || $value === false) {
+        return '<span style="color:#999">—</span>';
+    }
+
+    if (is_array($value)) {
+        // Choices (select, checkbox, etc.)
+        if (isset($value['label'])) {
+            return esc_html($value['label']);
+        }
+        // Multiple values
+        $labels = array_map(function ($v) {
+            return is_array($v) && isset($v['label']) ? $v['label'] : (is_scalar($v) ? $v : '');
+        }, $value);
+        return esc_html(implode(', ', array_filter($labels)));
+    }
+
+    // Boolean
+    if ($field['type'] === 'true_false') {
+        return $value ? '✅ Sí' : '❌ No';
+    }
+
+    // Truncate long text
+    $str = (string) $value;
+    if (mb_strlen($str) > 80) {
+        return esc_html(mb_substr($str, 0, 80)) . '…';
+    }
+
+    return esc_html($str);
+}
+
+/**
+ * --------------------------------------------------------
+ * 7. Exportación a Excel (CSV UTF-8 con BOM) de registros verificados
+ * --------------------------------------------------------
+ */
+add_action('init', function () {
+    if (empty($_GET['formularios_export']) || 'excel' !== $_GET['formularios_export']) {
+        return;
+    }
+
+    $post_type = sanitize_key($_GET['post_type'] ?? '');
+    $nonce     = sanitize_text_field($_GET['nonce'] ?? '');
+
+    if (empty($post_type) || !wp_verify_nonce($nonce, 'formularios_export_' . $post_type)) {
+        wp_die(__('Enlace de descarga inválido o expirado.', 'formularios-admin'), 403);
+    }
+
+    if (!post_type_exists($post_type)) {
+        wp_die(__('Tipo de contenido no existe.', 'formularios-admin'), 404);
+    }
+
+    // En admin requiere permisos; en frontend es público (solo verificados)
+    $is_admin_request = is_admin() || (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], 'admin-ajax.php') !== false);
+    if ($is_admin_request && !current_user_can('edit_posts')) {
+        wp_die(__('No tienes permisos para descargar este archivo.', 'formularios-admin'), 403);
+    }
+
+    $posts = get_posts([
+        'post_type'      => $post_type,
+        'post_status'    => 'publish',
+        'posts_per_page' => -1,
+        'meta_query'     => [['key' => '_formulario_verificado', 'value' => '1']],
+    ]);
+
+    if (empty($posts)) {
+        wp_die(__('No hay registros verificados para exportar.', 'formularios-admin'), 404);
+    }
+
+    // Obtener campos ACF del primer post
+    $acf_fields = function_exists('get_field_objects') ? get_field_objects($posts[0]->ID) : [];
+    if (!is_array($acf_fields)) {
+        $acf_fields = [];
+    }
+
+    $visible_fields = [];
+    foreach ($acf_fields as $field) {
+        if (in_array($field['type'], ['tab', 'message', 'accordion', 'group'], true)) {
+            continue;
+        }
+        $visible_fields[] = $field;
+    }
+
+    $cpt_obj  = get_post_type_object($post_type);
+    $cpt_label = $cpt_obj ? sanitize_file_name($cpt_obj->labels->name) : $post_type;
+    $filename = $cpt_label . '-verificados-' . gmdate('Y-m-d') . '.csv';
+
+    // Headers
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+
+    $output = fopen('php://output', 'w');
+
+    // UTF-8 BOM para que Excel reconozca los caracteres
+    fwrite($output, "\xEF\xBB\xBF");
+
+    // Encabezados
+    $headers = [__('Nombre', 'formularios-admin')];
+    foreach ($visible_fields as $field) {
+        $headers[] = $field['label'];
+    }
+    $headers[] = __('Fecha de publicación', 'formularios-admin');
+    fputcsv($output, $headers, ';');
+
+    // Filas
+    foreach ($posts as $p) {
+        $row = [get_the_title($p->ID)];
+        foreach ($visible_fields as $field) {
+            $value = get_field($field['name'], $p->ID);
+            $row[] = formularios_flatten_field_value($value, $field);
+        }
+        $row[] = get_the_date('d/m/Y', $p->ID);
+        fputcsv($output, $row, ';');
+    }
+
+    fclose($output);
+    exit;
+}, 1);
+
+/**
+ * Aplana un valor de campo ACF para exportación CSV.
+ */
+function formularios_flatten_field_value($value, array $field): string {
+    if (is_null($value) || $value === '' || $value === false) {
+        return '';
+    }
+
+    if ($field['type'] === 'true_false') {
+        return $value ? 'Sí' : 'No';
+    }
+
+    if (is_array($value)) {
+        if (isset($value['label'])) {
+            return $value['label'];
+        }
+        $labels = array_map(function ($v) {
+            return is_array($v) && isset($v['label']) ? $v['label'] : (is_scalar($v) ? (string) $v : '');
+        }, $value);
+        return implode(', ', array_filter($labels));
+    }
+
+    return (string) $value;
+}
