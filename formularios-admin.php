@@ -11,6 +11,12 @@ if (!defined('ABSPATH')) exit;
 // Variable global para guardar CPT detectados
 $FORMULARIOS_CPTS = [];
 
+// ── Import Feature ──────────────────────────────────────
+require_once __DIR__ . '/includes/class-import-handler.php';
+require_once __DIR__ . '/includes/class-import-admin-page.php';
+
+new Formularios_Import_Admin_Page();
+
 // Función para dibujar la vista principal del Menú Formularios
 function formularios_admin_dashboard_page() {
 
@@ -126,6 +132,12 @@ function formularios_admin_dashboard_page() {
             'nonce'              => wp_create_nonce('formularios_export_' . $cpt->name),
         ], admin_url('admin-ajax.php'));
         echo '<a href="' . esc_url($excel_url) . '" style="background:#135e96">⬇ Descargar Excel</a>';
+
+        // Link de importar JSON
+        if (current_user_can('manage_options')) {
+            $import_url = admin_url('admin.php?page=formularios-import&cpt=' . $cpt->name);
+            echo '<a href="' . esc_url($import_url) . '" style="background:#8c5e00">⬆ Importar JSON</a>';
+        }
 
         echo '</div>';
 
@@ -721,3 +733,254 @@ function formularios_flatten_field_value($value, array $field): string {
 
     return (string) $value;
 }
+
+
+/* =========================================================================
+ * AJAX Handlers – JSON Import
+ * ========================================================================= */
+
+/**
+ * AJAX: Upload JSON file and create an import session.
+ */
+add_action('wp_ajax_formularios_upload_json', function () {
+    check_ajax_referer('formularios_import', 'nonce');
+
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(__('Permisos insuficientes.', 'formularios-admin'));
+    }
+
+    $post_type = sanitize_key($_POST['post_type'] ?? '');
+    if (empty($post_type)) {
+        wp_send_json_error(__('Tipo de formulario no especificado.', 'formularios-admin'));
+    }
+
+    if (empty($_FILES['json_file'])) {
+        wp_send_json_error(__('No se recibió archivo.', 'formularios-admin'));
+    }
+
+    $handler = new Formularios_Import_Handler();
+
+    $session = $handler->upload_json($_FILES['json_file'], $post_type);
+    if (is_wp_error($session)) {
+        wp_send_json_error($session->get_error_message());
+    }
+
+    // Also return field introspection data so step 2 can render immediately
+    $json_fields = $handler->get_json_fields($session['session_id']);
+    $acf_fields  = $handler->get_acf_fields($post_type);
+
+    wp_send_json_success([
+        'session_id'  => $session['session_id'],
+        'total'       => $session['total'],
+        'json_fields' => is_wp_error($json_fields) ? [] : $json_fields,
+        'acf_fields'  => $acf_fields,
+    ]);
+});
+
+/**
+ * AJAX: Save mapping and options, prepare session for processing.
+ */
+add_action('wp_ajax_formularios_start_import', function () {
+    check_ajax_referer('formularios_import', 'nonce');
+
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(__('Permisos insuficientes.', 'formularios-admin'));
+    }
+
+    $session_id = sanitize_text_field($_POST['session_id'] ?? '');
+    $mapping    = json_decode(wp_unslash($_POST['mapping'] ?? '{}'), true);
+    $options    = json_decode(wp_unslash($_POST['options'] ?? '{}'), true);
+
+    if (empty($session_id) || !is_array($mapping)) {
+        wp_send_json_error(__('Datos inválidos.', 'formularios-admin'));
+    }
+
+    $handler = new Formularios_Import_Handler();
+    $result  = $handler->save_mapping($session_id, $mapping, $options);
+
+    if (is_wp_error($result)) {
+        wp_send_json_error($result->get_error_message());
+    }
+
+    wp_send_json_success(['status' => 'ready']);
+});
+
+/**
+ * AJAX: Process next batch of records.
+ */
+add_action('wp_ajax_formularios_process_batch', function () {
+    check_ajax_referer('formularios_import', 'nonce');
+
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(__('Permisos insuficientes.', 'formularios-admin'));
+    }
+
+    $session_id = sanitize_text_field($_POST['session_id'] ?? '');
+    $batch_size = intval($_POST['batch_size'] ?? 10);
+    $batch_size = max(1, min(50, $batch_size));
+
+    $handler = new Formularios_Import_Handler();
+    $result  = $handler->process_batch($session_id, $batch_size);
+
+    if (is_wp_error($result)) {
+        wp_send_json_error($result->get_error_message());
+    }
+
+    wp_send_json_success($result);
+});
+
+/**
+ * AJAX: Pause an import session.
+ */
+add_action('wp_ajax_formularios_pause_import', function () {
+    check_ajax_referer('formularios_import', 'nonce');
+
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(__('Permisos insuficientes.', 'formularios-admin'));
+    }
+
+    $session_id = sanitize_text_field($_POST['session_id'] ?? '');
+    $handler    = new Formularios_Import_Handler();
+    $result     = $handler->pause_session($session_id);
+
+    if (is_wp_error($result)) {
+        wp_send_json_error($result->get_error_message());
+    }
+
+    wp_send_json_success(['status' => 'paused']);
+});
+
+/**
+ * AJAX: Get current session status (for resume detection).
+ */
+add_action('wp_ajax_formularios_get_import_status', function () {
+    check_ajax_referer('formularios_import', 'nonce');
+
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(__('Permisos insuficientes.', 'formularios-admin'));
+    }
+
+    $session_id = sanitize_text_field($_POST['session_id'] ?? '');
+    $handler    = new Formularios_Import_Handler();
+    $session    = $handler->get_session($session_id);
+
+    if (is_wp_error($session)) {
+        wp_send_json_error($session->get_error_message());
+    }
+
+    wp_send_json_success([
+        'session_id' => $session['session_id'],
+        'status'     => $session['status'],
+        'offset'     => $session['offset'],
+        'total'      => $session['total'],
+        'created'    => $session['created'],
+        'skipped'    => $session['skipped'],
+        'errors'     => $session['errors'],
+    ]);
+});
+
+/**
+ * --------------------------------------------------------
+ * 9. Grupo ACF "Datos Internos de Proceso"
+ *    Campos administrativos generados automáticamente.
+ *    Se asigna dinámicamente a todos los CPT de formularios.
+ *    NO se muestra en el formulario público (grupo separado).
+ *    Prioridad 20 para ejecutarse después de que $FORMULARIOS_CPTS
+ *    se llene en init:10.
+ * --------------------------------------------------------
+ */
+add_action('init', function () {
+    if (!function_exists('acf_add_local_field_group')) {
+        return;
+    }
+
+    global $FORMULARIOS_CPTS;
+    $cpts = !empty($FORMULARIOS_CPTS) ? $FORMULARIOS_CPTS : [];
+
+    // Construir reglas de ubicación: un OR por cada CPT
+    $location = [];
+    foreach ($cpts as $cpt) {
+        $location[] = [
+            [
+                'param'    => 'post_type',
+                'operator' => '==',
+                'value'    => $cpt,
+            ],
+        ];
+    }
+
+    // Si no hay CPTs registrados aún, no registrar el grupo
+    if (empty($location)) {
+        return;
+    }
+
+    acf_add_local_field_group([
+        'key'      => 'group_datos_internos_proceso',
+        'title'    => 'Datos Internos de Proceso',
+        'fields'   => [
+            [
+                'key'          => 'field_codigo_legacy',
+                'label'        => 'Código Legacy',
+                'name'         => 'codigo_legacy',
+                'type'         => 'number',
+                'instructions' => 'ID secuencial del sistema anterior. Se genera automáticamente.',
+                'required'     => 0,
+                'readonly'     => 1,
+            ],
+            [
+                'key'          => 'field_radicado',
+                'label'        => 'Radicado',
+                'name'         => 'radicado',
+                'type'         => 'text',
+                'instructions' => 'Número de radicación (PW-YYYY-MM-DD-nnn). Solo para autodeclaraciones.',
+                'required'     => 0,
+                'readonly'     => 1,
+            ],
+            [
+                'key'          => 'field_fecha_registro_original',
+                'label'        => 'Fecha de Registro Original',
+                'name'         => 'fecha_registro_original',
+                'type'         => 'text',
+                'instructions' => 'Fecha/hora del registro original.',
+                'required'     => 0,
+                'readonly'     => 1,
+            ],
+        ],
+        'location'           => $location,
+        'menu_order'         => 100,  // Aparece después del grupo principal
+        'position'           => 'normal',
+        'style'              => 'default',
+        'label_placement'    => 'top',
+        'instruction_placement' => 'label',
+        'active'             => true,
+    ]);
+}, 20);
+
+/**
+ * --------------------------------------------------------
+ * 10. Auto-generar campos internos al enviar formulario
+ *     Escucha el hook de acf-forms-frontend-creator.
+ *     CPTs con radicado generan PW-{fecha}-{consecutivo}.
+ *     Todos reciben codigo_legacy y fecha_registro_original.
+ * --------------------------------------------------------
+ */
+add_action('eff_after_submission', function (int $post_id, string $post_type, array $sanitized) {
+    // Solo procesar CPTs gestionados por este plugin
+    if (!formularios_es_cpt_formulario($post_type)) {
+        return;
+    }
+
+    // Reutilizar el consecutivo ya generado por acf-forms-frontend-creator
+    $consecutive = (int) get_option('eff_consecutive_' . $post_type, 1);
+
+    update_field('codigo_legacy', $consecutive, $post_id);
+    update_field('fecha_registro_original', current_time('Y-m-d H:i:s'), $post_id);
+
+    // CPTs que generan número de radicado
+    $cpts_con_radicado = ['autodecl-vertim', 'autodecl-aguas'];
+
+    if (in_array($post_type, $cpts_con_radicado, true)) {
+        $radicado = 'PW-' . gmdate('Y-m-d') . '-' . $consecutive;
+        update_field('radicado', $radicado, $post_id);
+    }
+}, 10, 3);
