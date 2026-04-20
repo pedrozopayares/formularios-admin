@@ -270,8 +270,45 @@ class Formularios_Import_Handler {
         require_once ABSPATH . 'wp-admin/includes/file.php';
         require_once ABSPATH . 'wp-admin/includes/media.php';
 
+        // Pre-import filter: parse filter_field and filter_values from options.
+        $filter_field  = trim($options['filter_field'] ?? '');
+        $filter_values = [];
+        if ($filter_field !== '' && !empty($options['filter_values'])) {
+            $filter_values = array_map('trim', explode(',', $options['filter_values']));
+            $filter_values = array_filter($filter_values, function ($v) { return $v !== ''; });
+        }
+
+        // Required fields: skip records where ALL listed fields are empty (placeholders).
+        $required_fields = [];
+        if (!empty($options['required_fields'])) {
+            $required_fields = array_map('trim', explode(',', $options['required_fields']));
+            $required_fields = array_filter($required_fields, function ($v) { return $v !== ''; });
+        }
+
         foreach ($slice as $i => $record) {
             $record_index = $offset + $i;
+
+            // Check 1: Skip empty placeholder records (missing required field data).
+            if ($this->is_empty_placeholder($record, $required_fields)) {
+                $session['skipped']++;
+                $batch_log[] = [
+                    'index'  => $record_index,
+                    'status' => 'skipped',
+                    'msg'    => 'Registro vacío (sin datos en campos obligatorios)',
+                ];
+                continue;
+            }
+
+            // Check 2: Apply value-based filter (if configured).
+            if ($this->should_skip_record($record, $filter_field, $filter_values)) {
+                $session['skipped']++;
+                $batch_log[] = [
+                    'index'  => $record_index,
+                    'status' => 'skipped',
+                    'msg'    => sprintf('Filtrado (%s=%s)', $filter_field, $record[$filter_field] ?? ''),
+                ];
+                continue;
+            }
 
             try {
                 $result = $this->import_single_record($record, $record_index, $mapping, $options, $post_type, $session_id);
@@ -354,8 +391,19 @@ class Formularios_Import_Handler {
             }
         }
 
+        // --- Determine verification outcome for this record (must run before post creation) ---
+        $verification = $options['verification'] ?? 'unverified';
+        $is_verified  = false;
+        if ($verification === 'verified') {
+            $is_verified = true;
+        } elseif ($verification === 'map' && !empty($options['verification_field'])) {
+            $is_verified = $this->is_truthy($record[$options['verification_field']] ?? '');
+        }
+
         // --- Determine post status ---
-        $post_status = ($options['post_status'] ?? 'publish') === 'pending' ? 'pending' : 'publish';
+        // Unverified records cannot be published; downgrade to pending review.
+        $intended_status = ($options['post_status'] ?? 'publish') === 'pending' ? 'pending' : 'publish';
+        $post_status     = (!$is_verified && $intended_status === 'publish') ? 'pending' : $intended_status;
 
         // --- Build post title ---
         $title = $this->build_post_title($record, $mapping, $options, $post_type);
@@ -399,22 +447,22 @@ class Formularios_Import_Handler {
             }
         }
 
-        // --- Set verification meta ---
-        $verification = $options['verification'] ?? 'unverified';
-        if ($verification === 'verified') {
+        // --- Set verification meta (uses $is_verified computed before post creation) ---
+        if ($is_verified) {
             update_post_meta($post_id, '_formulario_verificado', '1');
             update_post_meta($post_id, '_formulario_verificado_por', get_current_user_id());
             update_post_meta($post_id, '_formulario_verificado_at', current_time('mysql'));
-        } elseif ($verification === 'map' && !empty($options['verification_field'])) {
-            $verif_json_key = $options['verification_field'];
-            $verif_value    = $record[$verif_json_key] ?? '';
-            if ($this->is_truthy($verif_value)) {
-                update_post_meta($post_id, '_formulario_verificado', '1');
-                update_post_meta($post_id, '_formulario_verificado_por', get_current_user_id());
-                update_post_meta($post_id, '_formulario_verificado_at', current_time('mysql'));
+        }
+        // unverified → no verification meta set (default)
+
+        // --- Save observaciones meta ---
+        $observaciones_field = trim($options['observaciones_field'] ?? '');
+        if ($observaciones_field !== '' && isset($record[$observaciones_field])) {
+            $obs_value = sanitize_textarea_field((string) $record[$observaciones_field]);
+            if ($obs_value !== '') {
+                update_post_meta($post_id, '_formulario_observaciones', $obs_value);
             }
         }
-        // 'unverified' → no verification meta set (default)
 
         // --- Import tracking meta ---
         update_post_meta($post_id, '_eff_submitted_from', 'import');
@@ -736,6 +784,45 @@ class Formularios_Import_Handler {
             default:
                 return sanitize_text_field(wp_unslash((string) $value));
         }
+    }
+
+    /**
+     * Determine if a record should be skipped based on the pre-import value filter.
+     *
+     * @param array  $record        The JSON record.
+     * @param string $filter_field   JSON field name to filter on (empty = no filter).
+     * @param array  $filter_values  Allowed values for the field.
+     * @return bool True if the record should be skipped.
+     */
+    private function should_skip_record(array $record, string $filter_field, array $filter_values): bool {
+        if ($filter_field === '' || empty($filter_values)) {
+            return false; // No filter configured — import all.
+        }
+
+        $value = trim((string) ($record[$filter_field] ?? ''));
+        return !in_array($value, $filter_values, true);
+    }
+
+    /**
+     * Determine if a record is an empty placeholder (missing data in required fields).
+     *
+     * @param array $record          The JSON record.
+     * @param array $required_fields  JSON field names that must have data.
+     * @return bool True if ALL required fields are empty (placeholder record).
+     */
+    private function is_empty_placeholder(array $record, array $required_fields): bool {
+        if (empty($required_fields)) {
+            return false; // No required fields configured — accept all.
+        }
+
+        foreach ($required_fields as $field) {
+            $value = trim((string) ($record[$field] ?? ''));
+            if ($value !== '' && $value !== '0') {
+                return false; // At least one required field has data.
+            }
+        }
+
+        return true; // ALL required fields are empty — placeholder.
     }
 
     /**

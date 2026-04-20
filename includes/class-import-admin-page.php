@@ -36,20 +36,21 @@ class Formularios_Import_Admin_Page {
             return;
         }
 
-        $base = plugin_dir_url(dirname(__FILE__));
+        $base     = plugin_dir_url(dirname(__FILE__));
+        $base_dir = plugin_dir_path(dirname(__FILE__));
 
         wp_enqueue_style(
             'formularios-import',
             $base . 'assets/css/import.css',
             [],
-            '1.0.0'
+            filemtime($base_dir . 'assets/css/import.css') ?: '1.0.0'
         );
 
         wp_enqueue_script(
             'formularios-import',
             $base . 'assets/js/import.js',
             ['jquery'],
-            '1.0.0',
+            filemtime($base_dir . 'assets/js/import.js') ?: '1.0.0',
             true
         );
 
@@ -216,6 +217,32 @@ class Formularios_Import_Admin_Page {
                         <td>
                             <input type="url" id="fi-file-base-url" class="regular-text" placeholder="https://ejemplo.com/documentos/">
                             <p class="description"><?php esc_html_e('Para rutas relativas de archivos. Dejar vacío si las URLs son completas.', 'formularios-admin'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="fi-required-fields"><?php esc_html_e('Campos obligatorios', 'formularios-admin'); ?></label></th>
+                        <td>
+                            <select id="fi-required-fields" class="regular-text" multiple size="3"></select>
+                            <p class="description"><?php esc_html_e('Omitir registros vacíos: si TODOS los campos seleccionados están vacíos, el registro se considera placeholder y se omite. Recomendado: nombre_o_razon_social.', 'formularios-admin'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="fi-filter-field"><?php esc_html_e('Filtrar por valor', 'formularios-admin'); ?></label></th>
+                        <td>
+                            <select id="fi-filter-field" class="regular-text">
+                                <option value=""><?php esc_html_e('— No filtrar —', 'formularios-admin'); ?></option>
+                            </select>
+                            <input type="text" id="fi-filter-values" class="regular-text" placeholder="<?php esc_attr_e('1,2', 'formularios-admin'); ?>" style="margin-top:4px;">
+                            <p class="description"><?php esc_html_e('Excluir registros donde el campo NO tenga uno de estos valores (separados por coma). Opcional: se aplica después de la validación de campos obligatorios.', 'formularios-admin'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="fi-observaciones-field"><?php esc_html_e('Campo de observaciones', 'formularios-admin'); ?></label></th>
+                        <td>
+                            <select id="fi-observaciones-field" class="regular-text">
+                                <option value=""><?php esc_html_e('— No importar —', 'formularios-admin'); ?></option>
+                            </select>
+                            <p class="description"><?php esc_html_e('Campo JSON cuyo valor se copiará al campo interno "Observaciones" del registro. Dejar vacío para no importar observaciones.', 'formularios-admin'); ?></p>
                         </td>
                     </tr>
                     <tr>

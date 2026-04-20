@@ -103,8 +103,11 @@
        ══════════════════════════════════════════════════════ */
     function buildMappingUI() {
         var $body = $('#fi-mapping-body').empty();
-        var $verif = $('#fi-verification-field').empty();
-        var $dup   = $('#fi-duplicate-key').empty().append('<option value="">' + esc(i18n.select_field || '— Sin duplicados —') + '</option>');
+        var $verif  = $('#fi-verification-field').empty();
+        var $dup    = $('#fi-duplicate-key').empty().append('<option value="">' + esc(i18n.select_field || '— Sin duplicados —') + '</option>');
+        var $filter = $('#fi-filter-field').empty().append('<option value="">' + esc(i18n.no_filter || '— No filtrar —') + '</option>');
+        var $req    = $('#fi-required-fields').empty();
+        var $obs    = $('#fi-observaciones-field').empty().append('<option value="">' + esc(i18n.select_field || '— No importar —') + '</option>');
 
         // Build ACF field <optgroup> markup once
         var acfOptions = '<option value="__ignore__">' + esc(i18n.select_field || '— No importar —') + '</option>';
@@ -148,9 +151,12 @@
             $row.append($('<td>').append($select));
             $body.append($row);
 
-            // Populate verification/duplicate dropdowns with JSON keys
+            // Populate verification/duplicate/filter/required/observaciones dropdowns with JSON keys
             $verif.append('<option value="' + esc(jf.key) + '">' + esc(jf.key) + '</option>');
             $dup.append('<option value="' + esc(jf.key) + '">' + esc(jf.key) + '</option>');
+            $filter.append('<option value="' + esc(jf.key) + '">' + esc(jf.key) + '</option>');
+            $req.append('<option value="' + esc(jf.key) + '">' + esc(jf.key) + '</option>');
+            $obs.append('<option value="' + esc(jf.key) + '">' + esc(jf.key) + '</option>');
         });
     }
 
@@ -197,6 +203,10 @@
                 title_template:      $('#fi-title-template').val(),
                 file_base_url:       $('#fi-file-base-url').val(),
                 attach_extra_files:  $('#fi-attach-extra-files').is(':checked'),
+                required_fields:     ($('#fi-required-fields').val() || []).join(','),
+                filter_field:        $('#fi-filter-field').val(),
+                filter_values:       $('#fi-filter-values').val(),
+                observaciones_field: $('#fi-observaciones-field').val(),
             };
 
             state.batchSize = parseInt($('#fi-batch-size').val(), 10) || 10;
