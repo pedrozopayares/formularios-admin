@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Formularios Admin (Dinámico)
  * Description: Crea el menú "Formularios" y organiza automáticamente los CPT personalizados dentro de él.
- * Version: 1.3.0
+ * Version: 1.3.1
  * Author: @pedrozopayares - Impactos
  */
 
@@ -14,8 +14,10 @@ $FORMULARIOS_CPTS = [];
 // ── Folder Mapping (per-CPT) ────────────────────────────
 require_once __DIR__ . '/includes/class-folder-resolver.php';
 require_once __DIR__ . '/includes/class-folder-settings-page.php';
+require_once __DIR__ . '/includes/class-acf-forms-bridge.php';
 
 Formularios_Folder_Resolver::register_hooks();
+Formularios_ACF_Forms_Bridge::register_hooks();
 new Formularios_Folder_Settings_Page();
 
 // ── Import Feature ──────────────────────────────────────
