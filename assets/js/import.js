@@ -202,6 +202,7 @@
                 post_status:         $('input[name="fi_post_status"]:checked').val(),
                 title_template:      $('#fi-title-template').val(),
                 file_base_url:       $('#fi-file-base-url').val(),
+                use_existing_files:  $('#fi-use-existing-files').is(':checked'),
                 attach_extra_files:  $('#fi-attach-extra-files').is(':checked'),
                 required_fields:     ($('#fi-required-fields').val() || []).join(','),
                 filter_field:        $('#fi-filter-field').val(),
@@ -283,12 +284,16 @@
             var d = res.data;
 
             // Update stats
-            updateProgress(d.offset, d.total, d.created, d.skipped, d.errors);
+            updateProgress(d.offset, d.total, d.created, d.skipped, d.errors, d.warnings);
 
             // Append batch log entries
             (d.batch_log || []).forEach(function (entry) {
                 if (entry.status === 'created') {
                     logEntry('created', '#' + entry.index + ' → Post #' + entry.post_id);
+                    // Show per-record file warnings
+                    (entry.warnings || []).forEach(function (w) {
+                        logEntry('warning', '#' + entry.index + ' ⚠ ' + w);
+                    });
                 } else if (entry.status === 'skipped') {
                     logEntry('skipped', '#' + entry.index + ' ' + (entry.msg || 'Duplicado'));
                 } else {
@@ -311,13 +316,14 @@
         });
     }
 
-    function updateProgress(offset, total, created, skipped, errors) {
+    function updateProgress(offset, total, created, skipped, errors, warnings) {
         var pct = total ? Math.round((offset / total) * 100) : 0;
         $('#fi-progress-fill').css('width', pct + '%');
         $('#fi-progress-text').text(offset + ' ' + (i18n.of || 'de') + ' ' + total + ' ' + (i18n.records || 'registros'));
         $('#fi-stat-created').text(created);
         $('#fi-stat-skipped').text(skipped);
         $('#fi-stat-errors').text(errors);
+        $('#fi-stat-warnings').text(warnings || 0);
     }
 
     function onComplete(data) {
@@ -327,10 +333,13 @@
         $('#fi-complete-summary').text(
             (data.created || 0) + ' ' + (i18n.created || 'creados') + ', ' +
             (data.skipped || 0) + ' ' + (i18n.skipped || 'omitidos') + ', ' +
-            (data.errors || 0) + ' ' + (i18n.errors || 'errores') + '.'
+            (data.errors  || 0) + ' ' + (i18n.errors  || 'errores')  +
+            ((data.warnings && data.warnings > 0)
+                ? ', ' + data.warnings + ' ' + (i18n.warnings || 'advertencias de archivos')
+                : '') + '.'
         );
         $('#fi-view-posts').attr('href', 'edit.php?post_type=' + esc(state.postType));
-        updateProgress(data.total, data.total, data.created, data.skipped, data.errors);
+        updateProgress(data.total, data.total, data.created, data.skipped, data.errors, data.warnings);
     }
 
     function logEntry(type, msg) {

@@ -13,6 +13,9 @@ class Formularios_Import_Handler {
     /** @var string Base directory for temporary import files */
     private string $upload_base;
 
+    /** @var string[] File-attachment warnings accumulated during a single record import */
+    private array $file_warnings = [];
+
     public function __construct() {
         $upload_dir = wp_upload_dir();
         $this->upload_base = trailingslashit($upload_dir['basedir']) . 'formularios-import';
@@ -85,7 +88,9 @@ class Formularios_Import_Handler {
             'created'      => 0,
             'skipped'      => 0,
             'errors'       => 0,
+            'warnings'     => 0,
             'error_log'    => [],
+            'warning_log'  => [],
             'mapping'      => [],
             'options'      => [],
             'status'       => 'pending', // pending | running | paused | completed | failed
@@ -323,7 +328,15 @@ class Formularios_Import_Handler {
                     $batch_log[] = ['index' => $record_index, 'status' => 'error', 'msg' => $msg];
                 } else {
                     $session['created']++;
-                    $batch_log[] = ['index' => $record_index, 'status' => 'created', 'post_id' => $result];
+                    $log_entry = ['index' => $record_index, 'status' => 'created', 'post_id' => $result['post_id']];
+                    if (!empty($result['warnings'])) {
+                        $session['warnings'] += count($result['warnings']);
+                        foreach ($result['warnings'] as $w) {
+                            $session['warning_log'][] = ['index' => $record_index, 'warning' => $w];
+                        }
+                        $log_entry['warnings'] = $result['warnings'];
+                    }
+                    $batch_log[] = $log_entry;
                 }
             } catch (\Throwable $e) {
                 $session['errors']++;
@@ -352,6 +365,7 @@ class Formularios_Import_Handler {
             'created'    => $session['created'],
             'skipped'    => $session['skipped'],
             'errors'     => $session['errors'],
+            'warnings'   => $session['warnings'],
             'status'     => $session['status'],
             'batch_log'  => $batch_log,
         ];
@@ -360,9 +374,10 @@ class Formularios_Import_Handler {
     /**
      * Import a single record: duplicate check, post creation, ACF field mapping.
      *
-     * @return int|string|WP_Error  Post ID on success, 'skipped' if duplicate, WP_Error on failure.
+     * @return array|string|WP_Error  ['post_id' => int, 'warnings' => string[]] on success, 'skipped' if duplicate, WP_Error on failure.
      */
     private function import_single_record(array $record, int $index, array $mapping, array $options, string $post_type, string $session_id) {
+        $this->file_warnings = [];
         // --- Duplicate detection ---
         $duplicate_key = $options['duplicate_key'] ?? '';
         if (!empty($duplicate_key) && isset($mapping[$duplicate_key])) {
@@ -421,8 +436,9 @@ class Formularios_Import_Handler {
         }
 
         // --- Map and save ACF fields ---
-        $base_url     = $options['file_base_url'] ?? '';
-        $attach_extra = !empty($options['attach_extra_files']);
+        $base_url           = $options['file_base_url'] ?? '';
+        $attach_extra       = !empty($options['attach_extra_files']);
+        $use_existing_files = !empty($options['use_existing_files']);
 
         foreach ($mapping as $json_key => $acf_field_name) {
             if (empty($acf_field_name) || $acf_field_name === '__ignore__') continue;
@@ -439,7 +455,7 @@ class Formularios_Import_Handler {
             $field_type = $acf_field ? ($acf_field['type'] ?? 'text') : 'text';
 
             if (in_array($field_type, ['file', 'image'], true)) {
-                $this->handle_file_field($raw_value, $acf_field_name, $post_id, $base_url, $attach_extra);
+                $this->handle_file_field($raw_value, $acf_field_name, $post_id, $base_url, $attach_extra, $post_type, $use_existing_files);
             } else {
                 // Sanitize based on type
                 $clean_value = $this->sanitize_import_value($raw_value, $field_type);
@@ -473,7 +489,7 @@ class Formularios_Import_Handler {
             update_post_meta($post_id, '_formularios_import_source_key', $duplicate_key . ':' . $record[$duplicate_key]);
         }
 
-        return $post_id;
+        return ['post_id' => $post_id, 'warnings' => $this->file_warnings];
     }
 
     /* =========================================================================
@@ -518,9 +534,15 @@ class Formularios_Import_Handler {
                     'url'      => $part,
                     'filename' => basename(wp_parse_url($part, PHP_URL_PATH) ?: $part),
                 ];
-            } elseif (!empty($base_url) && preg_match('/\.[a-zA-Z0-9]{2,5}$/', $part)) {
-                // Relative path with file extension
-                $url = rtrim($base_url, '/') . '/' . ltrim($part, '/');
+            } elseif (preg_match('/\.[a-zA-Z0-9]{2,5}$/', $part)) {
+                // Relative or absolute path with a file extension.
+                // When $base_url is set, build a downloadable URL.
+                // When it is empty the raw path is kept as-is; sidelink mode
+                // only needs the basename and will generate a warning if the
+                // file is missing. Download mode will also surface an HTTP error.
+                $url = !empty($base_url)
+                    ? rtrim($base_url, '/') . '/' . ltrim($part, '/')
+                    : $part;
                 $results[] = [
                     'url'      => $url,
                     'filename' => basename($part),
@@ -603,39 +625,153 @@ class Formularios_Import_Handler {
     }
 
     /**
-     * Handle a file-type ACF field: extract URLs, download files, attach to post.
+     * Handle a file-type ACF field: extract URLs, download (or sidelink) files, attach to post.
      *
      * First file is saved to the ACF field. When $attach_extra is true,
      * additional files are downloaded and attached as native WP attachments
      * (post_parent = $post_id) so they appear in the Media Library for
      * this post. This works without ACF Pro (no repeater/gallery needed).
      *
-     * @param string $raw_value       Raw field value (HTML, URLs, etc.).
-     * @param string $acf_field_name  ACF field name for the first file.
-     * @param int    $post_id         Target post ID.
-     * @param string $base_url        Base URL for relative paths.
-     * @param bool   $attach_extra    Whether to download extra files as post attachments.
+     * When $use_existing_files is true, files are NOT downloaded. Instead,
+     * we resolve each JSON path to its existing physical location under
+     * uploads/documentos/<cpt-folder>/ and create an attachment pointing to it.
+     *
+     * @param string $raw_value          Raw field value (HTML, URLs, etc.).
+     * @param string $acf_field_name     ACF field name for the first file.
+     * @param int    $post_id            Target post ID.
+     * @param string $base_url           Base URL for relative paths.
+     * @param bool   $attach_extra       Whether to download/attach extra files as post attachments.
+     * @param string $post_type          CPT slug (used to resolve per-CPT folder for sidelink).
+     * @param bool   $use_existing_files When true, sidelink existing files instead of downloading.
      */
-    private function handle_file_field(string $raw_value, string $acf_field_name, int $post_id, string $base_url, bool $attach_extra = false): void {
+    private function handle_file_field(string $raw_value, string $acf_field_name, int $post_id, string $base_url, bool $attach_extra = false, string $post_type = '', bool $use_existing_files = false): void {
         $files = $this->extract_file_urls($raw_value, $base_url);
         if (empty($files)) return;
 
         // First file → save to the ACF field
         $first = $files[0];
-        $attachment_id = $this->download_and_attach($first['url'], $first['filename'], $post_id);
+        if ($use_existing_files && $post_type !== '') {
+            $attachment_id = $this->sidelink_existing_file($first['filename'], $post_id, $post_type, $raw_value);
+        } else {
+            $attachment_id = $this->download_and_attach($first['url'], $first['filename'], $post_id);
+        }
 
-        if (!is_wp_error($attachment_id)) {
+        if (is_wp_error($attachment_id)) {
+            $this->file_warnings[] = sprintf(
+                __('Campo "%s" (archivo "%s"): %s', 'formularios-admin'),
+                $acf_field_name,
+                basename($first['filename']),
+                $attachment_id->get_error_message()
+            );
+        } else {
             update_field($acf_field_name, $attachment_id, $post_id);
         }
 
         // Remaining files → attach as native WP media linked to the post
         if ($attach_extra && count($files) > 1) {
             for ($i = 1, $n = count($files); $i < $n; $i++) {
-                $this->download_and_attach($files[$i]['url'], $files[$i]['filename'], $post_id);
-                // download_and_attach already sets post_parent = $post_id,
-                // so additional files are automatically linked in the Media Library.
+                if ($use_existing_files && $post_type !== '') {
+                    $extra_id = $this->sidelink_existing_file($files[$i]['filename'], $post_id, $post_type, $raw_value);
+                } else {
+                    $extra_id = $this->download_and_attach($files[$i]['url'], $files[$i]['filename'], $post_id);
+                }
+                if (is_wp_error($extra_id)) {
+                    $this->file_warnings[] = sprintf(
+                        __('Adjunto adicional "%s": %s', 'formularios-admin'),
+                        basename($files[$i]['filename']),
+                        $extra_id->get_error_message()
+                    );
+                }
             }
         }
+    }
+
+    /**
+     * Create a WP attachment that points to an already-existing file under
+     * <docroot>/documentos/<cpt-folder>/<basename>. Does NOT copy or move bytes.
+     *
+     * The file lives OUTSIDE wp-content/uploads/, so `_wp_attached_file` is
+     * stored as an absolute path and `_formularios_docroot_url` holds the
+     * canonical public URL (resolved via filter in Formularios_Folder_Resolver).
+     *
+     * @param string $filename   Basename or legacy path from JSON.
+     * @param int    $post_id    Target post (becomes post_parent).
+     * @param string $post_type  CPT slug (resolves the folder).
+     * @param string $raw_value  Raw JSON value (used as fallback to extract path).
+     * @return int|WP_Error      Attachment ID on success.
+     */
+    public function sidelink_existing_file(string $filename, int $post_id, string $post_type, string $raw_value = '') {
+        if (!class_exists('Formularios_Folder_Resolver')) {
+            return new WP_Error('resolver_missing', __('El helper de carpetas no está disponible.', 'formularios-admin'));
+        }
+
+        // Prefer basename from the filename arg; fall back to path extracted from raw_value.
+        $basename = basename($filename);
+        if ($basename === '' || $basename === '.') {
+            $path = wp_parse_url($raw_value, PHP_URL_PATH) ?: $raw_value;
+            $basename = basename($path);
+        }
+        if ($basename === '' || $basename === '.') {
+            return new WP_Error('sidelink_no_basename', __('No se pudo determinar el nombre del archivo desde el JSON.', 'formularios-admin'));
+        }
+
+        $basename      = sanitize_file_name($basename);
+        $abs_path      = Formularios_Folder_Resolver::get_absolute_path($post_type) . $basename;
+        $canonical_url = Formularios_Folder_Resolver::get_url($post_type) . $basename;
+
+        if (!file_exists($abs_path)) {
+            return new WP_Error('sidelink_not_found', sprintf(
+                __('Archivo no encontrado en la carpeta esperada: %s. Revisa el mapa de carpetas (Formularios > Carpetas de archivos).', 'formularios-admin'),
+                $abs_path
+            ));
+        }
+
+        // Reuse an existing attachment that already points to this file, if any.
+        $existing = get_posts([
+            'post_type'      => 'attachment',
+            'post_status'    => 'inherit',
+            'posts_per_page' => 1,
+            'fields'         => 'ids',
+            'meta_query'     => [
+                ['key' => Formularios_Folder_Resolver::META_PUBLIC_URL, 'value' => $canonical_url, 'compare' => '='],
+            ],
+        ]);
+        if (!empty($existing)) {
+            return (int) $existing[0];
+        }
+
+        // Determine MIME type from extension.
+        $mime      = wp_check_filetype($basename);
+        $mime_type = $mime['type'] ?: 'application/octet-stream';
+
+        $attachment_id = wp_insert_attachment([
+            'post_mime_type' => $mime_type,
+            'post_title'     => pathinfo($basename, PATHINFO_FILENAME),
+            'post_content'   => '',
+            'post_status'    => 'inherit',
+            'post_parent'    => $post_id,
+            'guid'           => $canonical_url,
+        ], $abs_path, $post_id);
+
+        if (is_wp_error($attachment_id)) {
+            return $attachment_id;
+        }
+
+        // Store absolute path (WP accepts this) + our marker + canonical URL.
+        update_post_meta($attachment_id, '_wp_attached_file', $abs_path);
+        update_post_meta($attachment_id, Formularios_Folder_Resolver::META_MARKER, 1);
+        update_post_meta($attachment_id, Formularios_Folder_Resolver::META_PUBLIC_URL, $canonical_url);
+
+        // For images, generate thumbnails; for other types, skip (fast).
+        if (strpos($mime_type, 'image/') === 0) {
+            require_once ABSPATH . 'wp-admin/includes/image.php';
+            $metadata = wp_generate_attachment_metadata($attachment_id, $abs_path);
+            if (!empty($metadata)) {
+                wp_update_attachment_metadata($attachment_id, $metadata);
+            }
+        }
+
+        return $attachment_id;
     }
 
     /* =========================================================================

@@ -181,7 +181,8 @@
 
 .fi-stat-created .fi-stat-num { color: #00a32a; }
 .fi-stat-skipped .fi-stat-num { color: #dba617; }
-.fi-stat-errors .fi-stat-num  { color: #d63638; }
+.fi-stat-errors .fi-stat-num   { color: #d63638; }
+.fi-stat-warnings .fi-stat-num { color: #b45309; }
 
 /* ── Activity Log ────────────────────────────────────── */
 .fi-log-wrap {
@@ -211,6 +212,7 @@
 .fi-log-created { color: #00a32a; }
 .fi-log-skipped { color: #996800; }
 .fi-log-error   { color: #d63638; }
+.fi-log-warning { color: #b45309; }
 
 /* ── Complete Message ────────────────────────────────── */
 .fi-complete-message {

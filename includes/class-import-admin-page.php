@@ -85,6 +85,7 @@ class Formularios_Import_Admin_Page {
                 'created'      => __('Creados', 'formularios-admin'),
                 'skipped'      => __('Omitidos', 'formularios-admin'),
                 'errors'       => __('Errores', 'formularios-admin'),
+                'warnings'     => __('Advertencias de archivos', 'formularios-admin'),
                 'of'           => __('de', 'formularios-admin'),
                 'records'      => __('registros', 'formularios-admin'),
                 'select_cpt'   => __('Seleccione un formulario', 'formularios-admin'),
@@ -220,6 +221,22 @@ class Formularios_Import_Admin_Page {
                         </td>
                     </tr>
                     <tr>
+                        <th><?php esc_html_e('Archivos existentes', 'formularios-admin'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" id="fi-use-existing-files" value="1">
+                                <?php esc_html_e('Los archivos ya existen en el servidor (no descargar)', 'formularios-admin'); ?>
+                            </label>
+                            <p class="description">
+                                <?php
+                                echo esc_html__('Si está marcado, el importador no descargará archivos remotos. En su lugar, buscará cada archivo por nombre dentro de la carpeta configurada para este formulario en ', 'formularios-admin');
+                                echo '<a href="' . esc_url(admin_url('admin.php?page=formularios-folders')) . '" target="_blank">' . esc_html__('Carpetas de archivos', 'formularios-admin') . '</a>';
+                                echo esc_html__(' y creará un attachment apuntando al archivo existente sin duplicarlo.', 'formularios-admin');
+                                ?>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
                         <th><label for="fi-required-fields"><?php esc_html_e('Campos obligatorios', 'formularios-admin'); ?></label></th>
                         <td>
                             <select id="fi-required-fields" class="regular-text" multiple size="3"></select>
@@ -293,6 +310,10 @@ class Formularios_Import_Admin_Page {
                     <div class="fi-stat fi-stat-errors">
                         <span class="fi-stat-num" id="fi-stat-errors">0</span>
                         <span class="fi-stat-label"><?php esc_html_e('Errores', 'formularios-admin'); ?></span>
+                    </div>
+                    <div class="fi-stat fi-stat-warnings">
+                        <span class="fi-stat-num" id="fi-stat-warnings">0</span>
+                        <span class="fi-stat-label"><?php esc_html_e('Advertencias', 'formularios-admin'); ?></span>
                     </div>
                 </div>
 
