@@ -89,6 +89,11 @@ class Formularios_Form_Settings {
 
     /**
      * Recursively flatten ACF fields (group children are included).
+     *
+     * Some legacy/imported ACF field groups have an empty `post_excerpt` in the
+     * database, which causes ACF to return fields with an empty `name`. In that
+     * case we fall back to the field `key` as the identifier, which `get_field()`
+     * also accepts for value retrieval.
      */
     private static function collect_field(array $field, array &$out, array &$seen): void {
         $type = $field['type'] ?? '';
@@ -104,16 +109,35 @@ class Formularios_Form_Settings {
             return;
         }
 
+        $key  = $field['key']  ?? '';
         $name = $field['name'] ?? '';
-        if ($name === '' || isset($seen[$name])) {
+
+        // Stable identifier: prefer `name` (human-readable meta key), fall back
+        // to `key` when the DB row has a broken post_excerpt.
+        $id = $name !== '' ? $name : $key;
+        if ($id === '' || isset($seen[$id])) {
             return;
         }
-        $seen[$name] = true;
+        $seen[$id] = true;
+
+        // Label: use declared label, else the name, else derive from the key
+        // by stripping a leading "field_" and the next underscore-separated token
+        // (which is typically a group prefix like "gacu_").
+        $label = $field['label'] ?? '';
+        if ($label === '') {
+            if ($name !== '') {
+                $label = $name;
+            } else {
+                $stripped = preg_replace('/^field_[^_]+_/', '', $key);
+                $label    = str_replace('_', ' ', $stripped ?: $key);
+            }
+        }
+
         $out[] = [
-            'name'  => $name,
-            'label' => $field['label'] ?? $name,
+            'name'  => $id,
+            'label' => $label,
             'type'  => $type,
-            'key'   => $field['key'] ?? '',
+            'key'   => $key,
         ];
     }
 
