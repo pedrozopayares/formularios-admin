@@ -159,6 +159,16 @@ class Formularios_Folder_Resolver {
     public static function register_hooks(): void {
         add_filter('wp_get_attachment_url', [__CLASS__, 'filter_attachment_url'], 10, 2);
         add_filter('get_attached_file',     [__CLASS__, 'filter_attached_file'], 10, 2);
+
+        // Hide docroot-managed attachments from the WordPress Media Library.
+        // They still exist as attachment posts (so ACF file/image fields keep
+        // working), but they are excluded from every listing surface:
+        //   - Media Library modal (grid view)        → ajax_query_attachments_args
+        //   - Media Library list page (upload.php)   → pre_get_posts
+        //   - Gutenberg / REST media picker          → rest_attachment_query
+        add_filter('ajax_query_attachments_args', [__CLASS__, 'filter_ajax_query_attachments'], 10, 1);
+        add_action('pre_get_posts',               [__CLASS__, 'filter_pre_get_posts'],          10, 1);
+        add_filter('rest_attachment_query',       [__CLASS__, 'filter_rest_attachment_query'],  10, 2);
     }
 
     /**
@@ -185,5 +195,88 @@ class Formularios_Folder_Resolver {
             return $raw;
         }
         return $file;
+    }
+
+    /**
+     * Build a meta_query clause that excludes docroot-managed attachments.
+     * Merged into existing meta_query via AND (WP will wrap in an AND group).
+     */
+    private static function exclude_docroot_meta_query(array $existing = []): array {
+        $clause = [
+            'key'     => self::META_MARKER,
+            'compare' => 'NOT EXISTS',
+        ];
+
+        if (empty($existing)) {
+            return [$clause];
+        }
+
+        // If there is an existing meta_query, AND our clause to it.
+        if (!isset($existing['relation'])) {
+            $existing = array_merge(['relation' => 'AND'], $existing);
+        }
+        $existing[] = $clause;
+        return $existing;
+    }
+
+    /**
+     * Exclude docroot attachments from the Media Library modal (grid view).
+     */
+    public static function filter_ajax_query_attachments(array $args): array {
+        // Bypass the filter when the user explicitly asks for docroot files
+        // (e.g. a future admin tool built on top of this plugin).
+        if (!empty($args['formularios_include_docroot'])) {
+            unset($args['formularios_include_docroot']);
+            return $args;
+        }
+
+        $args['meta_query'] = self::exclude_docroot_meta_query($args['meta_query'] ?? []);
+        return $args;
+    }
+
+    /**
+     * Exclude docroot attachments from admin list queries on attachments
+     * (upload.php list view, and any WP_Query targeting attachments in admin).
+     *
+     * Does not touch frontend queries nor queries for a specific post id
+     * (so ACF file/image fields keep resolving attachments by ID).
+     */
+    public static function filter_pre_get_posts(WP_Query $query): void {
+        if ($query->get('formularios_include_docroot')) {
+            return;
+        }
+
+        // Only filter listing-type queries in admin context.
+        if (!is_admin()) {
+            return;
+        }
+
+        // Don't touch queries looking up a specific attachment by id / name.
+        if ($query->get('p') || $query->get('post__in') || $query->get('name') || $query->get('attachment_id')) {
+            return;
+        }
+
+        $post_type = $query->get('post_type');
+        if ($post_type !== 'attachment' && $post_type !== ['attachment']) {
+            return;
+        }
+
+        $existing = $query->get('meta_query');
+        if (!is_array($existing)) {
+            $existing = [];
+        }
+        $query->set('meta_query', self::exclude_docroot_meta_query($existing));
+    }
+
+    /**
+     * Exclude docroot attachments from REST queries (Gutenberg / block editor
+     * media picker, external clients).
+     *
+     * @param array            $args    Query args passed to WP_Query.
+     * @param WP_REST_Request  $request REST request.
+     */
+    public static function filter_rest_attachment_query(array $args, $request): array {
+        $args['meta_query'] = self::exclude_docroot_meta_query($args['meta_query'] ?? []);
+        return $args;
     }
 }
