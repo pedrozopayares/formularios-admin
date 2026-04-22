@@ -621,6 +621,12 @@ class Formularios_Import_Handler {
         $metadata = wp_generate_attachment_metadata($attachment_id, $upload['file']);
         wp_update_attachment_metadata($attachment_id, $metadata);
 
+        // Mark this attachment as managed by the Formularios suite so it is
+        // hidden from the Media Library (but still usable by ACF file fields).
+        if (class_exists('Formularios_Folder_Resolver')) {
+            update_post_meta($attachment_id, Formularios_Folder_Resolver::META_MANAGED, 1);
+        }
+
         return $attachment_id;
     }
 
@@ -760,6 +766,7 @@ class Formularios_Import_Handler {
         // Store absolute path (WP accepts this) + our marker + canonical URL.
         update_post_meta($attachment_id, '_wp_attached_file', $abs_path);
         update_post_meta($attachment_id, Formularios_Folder_Resolver::META_MARKER, 1);
+        update_post_meta($attachment_id, Formularios_Folder_Resolver::META_MANAGED, 1);
         update_post_meta($attachment_id, Formularios_Folder_Resolver::META_PUBLIC_URL, $canonical_url);
 
         // For images, generate thumbnails; for other types, skip (fast).

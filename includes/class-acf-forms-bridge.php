@@ -108,6 +108,7 @@ class Formularios_ACF_Forms_Bridge {
         // Store the absolute path (outside wp-content/uploads) and canonical URL.
         update_post_meta($attachment_id, '_wp_attached_file', $upload['file']);
         update_post_meta($attachment_id, Formularios_Folder_Resolver::META_MARKER, 1);
+        update_post_meta($attachment_id, Formularios_Folder_Resolver::META_MANAGED, 1);
         update_post_meta($attachment_id, Formularios_Folder_Resolver::META_PUBLIC_URL, $upload['url']);
     }
 

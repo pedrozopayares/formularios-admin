@@ -25,6 +25,16 @@ class Formularios_Folder_Resolver {
     const META_PUBLIC_URL = '_formularios_docroot_url';
 
     /**
+     * Broader marker stamped on every attachment created/managed by any
+     * plugin in the Formularios suite (both docroot files AND regular uploads
+     * coming from the JSON import downloader or the frontend ACF form).
+     *
+     * Used to hide these attachments from the WordPress Media Library while
+     * keeping them usable by ACF file/image fields.
+     */
+    const META_MANAGED = '_formularios_managed';
+
+    /**
      * Default CPT → folder map inferred from the legacy JSON prefixes.
      * Used only the first time the settings page is opened (pre-populated).
      */
@@ -169,6 +179,10 @@ class Formularios_Folder_Resolver {
         add_filter('ajax_query_attachments_args', [__CLASS__, 'filter_ajax_query_attachments'], 10, 1);
         add_action('pre_get_posts',               [__CLASS__, 'filter_pre_get_posts'],          10, 1);
         add_filter('rest_attachment_query',       [__CLASS__, 'filter_rest_attachment_query'],  10, 2);
+
+        // One-time backfill: stamp META_MANAGED on existing attachments that
+        // belong to the Formularios suite but were created before META_MANAGED existed.
+        add_action('admin_init', [__CLASS__, 'maybe_run_backfill']);
     }
 
     /**
@@ -198,12 +212,13 @@ class Formularios_Folder_Resolver {
     }
 
     /**
-     * Build a meta_query clause that excludes docroot-managed attachments.
-     * Merged into existing meta_query via AND (WP will wrap in an AND group).
+     * Build a meta_query clause that excludes attachments managed by this
+     * plugin suite (either docroot files or regular uploads from the importer
+     * / frontend form). Merged into existing meta_query via AND.
      */
     private static function exclude_docroot_meta_query(array $existing = []): array {
         $clause = [
-            'key'     => self::META_MARKER,
+            'key'     => self::META_MANAGED,
             'compare' => 'NOT EXISTS',
         ];
 
@@ -235,7 +250,7 @@ class Formularios_Folder_Resolver {
     }
 
     /**
-     * Exclude docroot attachments from admin list queries on attachments
+     * Exclude managed attachments from admin list queries on attachments
      * (upload.php list view, and any WP_Query targeting attachments in admin).
      *
      * Does not touch frontend queries nor queries for a specific post id
@@ -246,7 +261,7 @@ class Formularios_Folder_Resolver {
             return;
         }
 
-        // Only filter listing-type queries in admin context.
+        // Only filter in admin.
         if (!is_admin()) {
             return;
         }
@@ -257,8 +272,15 @@ class Formularios_Folder_Resolver {
         }
 
         $post_type = $query->get('post_type');
-        if ($post_type !== 'attachment' && $post_type !== ['attachment']) {
-            return;
+        $targets_attachments = ($post_type === 'attachment')
+            || (is_array($post_type) && in_array('attachment', $post_type, true));
+
+        // upload.php list view: main query has no post_type set but WP forces it internally.
+        if (!$targets_attachments) {
+            global $pagenow;
+            if ($pagenow !== 'upload.php' || !$query->is_main_query()) {
+                return;
+            }
         }
 
         $existing = $query->get('meta_query');
@@ -278,5 +300,82 @@ class Formularios_Folder_Resolver {
     public static function filter_rest_attachment_query(array $args, $request): array {
         $args['meta_query'] = self::exclude_docroot_meta_query($args['meta_query'] ?? []);
         return $args;
+    }
+
+    /**
+     * Stamp META_MANAGED on any attachment produced by the Formularios suite
+     * that is missing it. Idempotent; safe to call multiple times.
+     *
+     * Covers:
+     *   - Docroot attachments (already have META_MARKER).
+     *   - Attachments whose post_parent is one of the CPTs in the folder map
+     *     (catches files downloaded via the JSON importer into wp-content/uploads
+     *     and legacy files created before META_MANAGED existed).
+     *
+     * @return int Number of attachments newly stamped.
+     */
+    public static function backfill_managed_marker(): int {
+        global $wpdb;
+
+        $stamped = 0;
+
+        // 1) All docroot attachments.
+        $ids = get_posts([
+            'post_type'      => 'attachment',
+            'post_status'    => 'any',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+            'meta_query'     => [
+                'relation' => 'AND',
+                ['key' => self::META_MARKER,  'compare' => 'EXISTS'],
+                ['key' => self::META_MANAGED, 'compare' => 'NOT EXISTS'],
+            ],
+            'suppress_filters' => true,
+        ]);
+        foreach ($ids as $id) {
+            update_post_meta((int) $id, self::META_MANAGED, 1);
+            $stamped++;
+        }
+
+        // 2) Attachments whose parent is one of our CPTs.
+        $cpts = array_keys(self::get_map());
+        if (!empty($cpts)) {
+            $placeholders = implode(',', array_fill(0, count($cpts), '%s'));
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            $sql = $wpdb->prepare(
+                "SELECT a.ID
+                 FROM {$wpdb->posts} a
+                 INNER JOIN {$wpdb->posts} p ON a.post_parent = p.ID
+                 LEFT JOIN {$wpdb->postmeta} m
+                     ON m.post_id = a.ID AND m.meta_key = %s
+                 WHERE a.post_type = 'attachment'
+                   AND p.post_type IN ($placeholders)
+                   AND m.meta_id IS NULL",
+                array_merge([self::META_MANAGED], $cpts)
+            );
+            $ids = $wpdb->get_col($sql);
+            foreach ($ids as $id) {
+                update_post_meta((int) $id, self::META_MANAGED, 1);
+                $stamped++;
+            }
+        }
+
+        return $stamped;
+    }
+
+    /**
+     * Run the backfill once after plugin load. Gated by an option so it only
+     * executes the first time (or when the stored schema version changes).
+     */
+    public static function maybe_run_backfill(): void {
+        if (!is_admin()) {
+            return;
+        }
+        $done_version = get_option('formularios_managed_backfill_version', '0');
+        if ($done_version === '1') {
+            return;
+        }
+        self::backfill_managed_marker();
+        update_option('formularios_managed_backfill_version', '1', false);
     }
 }
