@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Formularios Admin (Dinámico)
  * Description: Crea el menú "Formularios" y organiza automáticamente los CPT personalizados dentro de él.
- * Version: 1.3.3
+ * Version: 1.3.4
  * Author: @pedrozopayares - Impactos
  */
 
@@ -15,10 +15,16 @@ $FORMULARIOS_CPTS = [];
 require_once __DIR__ . '/includes/class-folder-resolver.php';
 require_once __DIR__ . '/includes/class-folder-settings-page.php';
 require_once __DIR__ . '/includes/class-acf-forms-bridge.php';
+require_once __DIR__ . '/includes/class-form-settings.php';
+require_once __DIR__ . '/includes/class-form-settings-page.php';
 
 Formularios_Folder_Resolver::register_hooks();
 Formularios_ACF_Forms_Bridge::register_hooks();
 new Formularios_Folder_Settings_Page();
+new Formularios_Form_Settings_Page();
+
+// Register configured ACF fields as admin list columns after CPTs are loaded.
+add_action('admin_init', ['Formularios_Form_Settings', 'register_list_columns'], 20);
 
 // ── Import Feature ──────────────────────────────────────
 require_once __DIR__ . '/includes/class-import-handler.php';
@@ -540,7 +546,12 @@ add_shortcode('formularios_verificados', function (array $atts = []): string {
 
     ob_start();
 
-    // Excel download link
+    // Botón de descarga Excel: visible si la exportación pública está activa
+    // o si el usuario actual tiene permisos de edición.
+    $public_export = class_exists('Formularios_Form_Settings')
+        && Formularios_Form_Settings::is_public_export_enabled($post_type);
+    $show_download = $public_export || current_user_can('edit_posts');
+
     $excel_url = add_query_arg([
         'formularios_export' => 'excel',
         'post_type'          => $post_type,
@@ -550,7 +561,9 @@ add_shortcode('formularios_verificados', function (array $atts = []): string {
     echo '<div class="formularios-verificados-wrap">';
     echo '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">';
     echo '<h3 style="margin:0">' . esc_html($cpt_name) . ' — ' . esc_html__('Registros Verificados', 'formularios-admin') . ' (' . intval($query->found_posts) . ')</h3>';
-    echo '<a href="' . esc_url($excel_url) . '" style="display:inline-flex;align-items:center;gap:6px;background:#135e96;color:#fff;padding:8px 16px;border-radius:4px;text-decoration:none;font-size:14px">⬇ ' . esc_html__('Descargar Excel', 'formularios-admin') . '</a>';
+    if ($show_download) {
+        echo '<a href="' . esc_url($excel_url) . '" style="display:inline-flex;align-items:center;gap:6px;background:#135e96;color:#fff;padding:8px 16px;border-radius:4px;text-decoration:none;font-size:14px">⬇ ' . esc_html__('Descargar Excel', 'formularios-admin') . '</a>';
+    }
     echo '</div>';
 
     echo '<div style="overflow-x:auto">';
@@ -649,10 +662,16 @@ add_action('init', function () {
         wp_die(__('Tipo de contenido no existe.', 'formularios-admin'), 404);
     }
 
-    // En admin requiere permisos; en frontend es público (solo verificados)
-    $is_admin_request = is_admin() || (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], 'admin-ajax.php') !== false);
-    if ($is_admin_request && !current_user_can('edit_posts')) {
-        wp_die(__('No tienes permisos para descargar este archivo.', 'formularios-admin'), 403);
+    // Acceso:
+    //   - Usuarios con permisos de edición → siempre pueden descargar.
+    //   - Público anónimo → solo si el CPT tiene habilitada la exportación pública.
+    $can_admin_export = current_user_can('edit_posts');
+    if (!$can_admin_export) {
+        if (!class_exists('Formularios_Form_Settings')
+            || !Formularios_Form_Settings::is_public_export_enabled($post_type)
+        ) {
+            wp_die(__('La descarga pública no está habilitada para este formulario.', 'formularios-admin'), 403);
+        }
     }
 
     $posts = get_posts([
@@ -666,18 +685,23 @@ add_action('init', function () {
         wp_die(__('No hay registros verificados para exportar.', 'formularios-admin'), 404);
     }
 
-    // Obtener campos ACF del primer post
-    $acf_fields = function_exists('get_field_objects') ? get_field_objects($posts[0]->ID) : [];
-    if (!is_array($acf_fields)) {
-        $acf_fields = [];
-    }
+    // Campos a exportar: los configurados por el admin, o todos los disponibles si no hay selección.
+    $visible_fields = class_exists('Formularios_Form_Settings')
+        ? Formularios_Form_Settings::get_export_fields($post_type)
+        : [];
 
-    $visible_fields = [];
-    foreach ($acf_fields as $field) {
-        if (in_array($field['type'], ['tab', 'message', 'accordion', 'group'], true)) {
-            continue;
+    if (empty($visible_fields)) {
+        // Fallback: intentar derivar campos desde el primer post (comportamiento previo).
+        $acf_fields = function_exists('get_field_objects') ? get_field_objects($posts[0]->ID) : [];
+        if (!is_array($acf_fields)) {
+            $acf_fields = [];
         }
-        $visible_fields[] = $field;
+        foreach ($acf_fields as $field) {
+            if (in_array($field['type'], ['tab', 'message', 'accordion', 'group'], true)) {
+                continue;
+            }
+            $visible_fields[] = $field;
+        }
     }
 
     $cpt_obj  = get_post_type_object($post_type);
@@ -716,7 +740,7 @@ add_action('init', function () {
 
     fclose($output);
     exit;
-}, 1);
+}, 20);
 
 /**
  * Aplana un valor de campo ACF para exportación CSV.
