@@ -70,7 +70,7 @@ class Formularios_Form_Settings {
                 'export_fields' => array_values(array_filter(array_map('sanitize_key', (array) ($row['export_fields'] ?? [])))),
                 'list_columns'  => array_values(array_filter(array_map('sanitize_key', (array) ($row['list_columns']  ?? [])))),
                 'radicado'      => [
-                    'enabled'     => !empty($rad['enabled']),
+                    'enabled'     => !array_key_exists('enabled', $rad) || !empty($rad['enabled']),
                     'prefix'      => strtoupper(preg_replace('/[^A-Za-z0-9\-_]/', '', (string) ($rad['prefix'] ?? 'PW'))),
                     'date_format' => $date_fmt,
                     'digits'      => $digits,
@@ -276,7 +276,7 @@ class Formularios_Form_Settings {
     /**
      * Minimal escaped renderer for column values.
      */
-    private static function render_column_value($value, array $field): string {
+    private static function render_column_value(mixed $value, array $field): string {
         if ($value === '' || $value === null || $value === false) {
             return '<span style="color:#999">—</span>';
         }
