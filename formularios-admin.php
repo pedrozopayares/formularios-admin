@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Formularios Admin (Dinámico)
  * Description: Crea el menú "Formularios" y organiza automáticamente los CPT personalizados dentro de él.
- * Version: 1.4.1
+ * Version: 1.4.2
  * Author: @pedrozopayares - Impactos
  */
 
@@ -1110,7 +1110,7 @@ add_action('init', function () {
                 'label'        => 'Radicado',
                 'name'         => 'radicado',
                 'type'         => 'text',
-                'instructions' => 'Número de radicación (PW-YYYY-MM-DD-nnn). Solo para autodeclaraciones.',
+                'instructions' => 'Número de radicación (PW-YYYY-MM-DD-nnn). Generado automáticamente al enviar el formulario.',
                 'required'     => 0,
                 'readonly'     => 1,
             ],
@@ -1156,11 +1156,6 @@ add_action('eff_after_submission', function (int $post_id, string $post_type, ar
     update_field('codigo_legacy', $consecutive, $post_id);
     update_field('fecha_registro_original', current_time('Y-m-d H:i:s'), $post_id);
 
-    // CPTs que generan número de radicado
-    $cpts_con_radicado = apply_filters('formularios_cpts_con_radicado', ['autodecl-vertim', 'autodecl-aguas']);
-
-    if (in_array($post_type, $cpts_con_radicado, true)) {
-        $radicado = 'PW-' . gmdate('Y-m-d') . '-' . str_pad($consecutive, 3, '0', STR_PAD_LEFT);
-        update_field('radicado', $radicado, $post_id);
-    }
+    $radicado = 'PW-' . gmdate('Y-m-d') . '-' . str_pad($consecutive, 3, '0', STR_PAD_LEFT);
+    update_field('radicado', $radicado, $post_id);
 }, 5, 3);
