@@ -40,13 +40,18 @@ class Formularios_User_Notification_Helper {
             return $template;
         }
 
+        // Radicado: generated internally after submission, must be read from DB.
+        $radicado_val = isset($submitted_data['radicado'])
+            ? (string) $submitted_data['radicado']
+            : (function_exists('get_field') ? ((string) (get_field('radicado', $post_id) ?? '')) : '');
+
         $replacements = [
             '{site_name}'  => get_bloginfo('name'),
             '{site_url}'   => home_url('/'),
             '{post_type}'  => $post->post_type,
             '{post_title}' => $post->post_title,
             '{post_id}'    => (string) $post_id,
-            '{radicado}'   => isset($submitted_data['radicado']) ? (string) $submitted_data['radicado'] : '',
+            '{radicado}'   => $radicado_val,
         ];
 
         // Add field-specific placeholders

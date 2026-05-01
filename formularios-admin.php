@@ -1140,6 +1140,8 @@ add_action('init', function () {
  *     Escucha el hook de acf-forms-frontend-creator.
  *     CPTs con radicado generan PW-{fecha}-{consecutivo}.
  *     Todos reciben codigo_legacy y fecha_registro_original.
+ *     Prioridad 5: debe ejecutarse ANTES del bridge (prioridad 10)
+ *     para que el radicado esté disponible en el email de notificación.
  * --------------------------------------------------------
  */
 add_action('eff_after_submission', function (int $post_id, string $post_type, array $sanitized) {
@@ -1155,10 +1157,10 @@ add_action('eff_after_submission', function (int $post_id, string $post_type, ar
     update_field('fecha_registro_original', current_time('Y-m-d H:i:s'), $post_id);
 
     // CPTs que generan número de radicado
-    $cpts_con_radicado = ['autodecl-vertim', 'autodecl-aguas'];
+    $cpts_con_radicado = apply_filters('formularios_cpts_con_radicado', ['autodecl-vertim', 'autodecl-aguas']);
 
     if (in_array($post_type, $cpts_con_radicado, true)) {
-        $radicado = 'PW-' . gmdate('Y-m-d') . '-' . $consecutive;
+        $radicado = 'PW-' . gmdate('Y-m-d') . '-' . str_pad($consecutive, 3, '0', STR_PAD_LEFT);
         update_field('radicado', $radicado, $post_id);
     }
-}, 10, 3);
+}, 5, 3);

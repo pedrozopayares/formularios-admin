@@ -1,0 +1,115 @@
+<form role="form" id="solicitudweb" name="solicitudweb" action="registrargeneradoresacu.php" method="post" enctype="multipart/form-data">
+            <div class="row personales">
+                <div class="form-group col-xs-12 col-sm-12 col-md-12 col-lg-12"><br>
+                   <div align="center"> <p>Sus datos personales serán tratados conforme dictan las disposiciones generales para la protección de datos personales </p></div>
+                </div>
+            </div>
+            <div class="row lineauno">
+            	<div class="form-group">
+				    <label for="nombre_o_razon_social" class="col-xs-12 col-sm-12 col-md-5 col-lg-5 control-label">Nombre o razon social <span class="text-danger">*</span></label>
+				    <div class="col-xs-12 col-sm-12 col-md-7 col-lg-7">
+				      <input type="text" class="form-control" id="nombre_o_razon_social" name="nombre_o_razon_social" required="" placeholder="Nombre o razon social">
+				    </div>
+				</div>
+			</div>
+			<div class="row lineados">
+				<div class="form-group">
+				    <label for="numero_de_identificacion_o_nit" class="col-xs-12 col-sm-12 col-md-5 col-lg-5 control-label">Número de identificación o NIT <span class="text-danger">*</span></label>
+				    <div class="col-xs-12 col-sm-12 col-md-7 col-lg-7">
+				      <input type="text" class="form-control" id="numero_de_identificacion_o_nit" name="numero_de_identificacion_o_nit" required="" placeholder="Número de identificación o NIT">
+				    </div>
+				</div>
+			</div>
+			<div class="row lineauno">
+				<div class="form-group">
+				    <label for="representante_legal" class="col-xs-12 col-sm-12 col-md-5 col-lg-5 control-label">Representante legal <span class="text-danger">*</span></label>
+				    <div class="col-xs-12 col-sm-12 col-md-7 col-lg-7">
+				      <input type="text" class="form-control" id="representante_legal" name="representante_legal" required="" placeholder="Representante legal">
+				    </div>
+				</div>
+            </div>
+            <div class="row lineados">
+				<div class="form-group">
+				    <label for="numero_de_contacto" class="col-xs-12 col-sm-12 col-md-5 col-lg-5 control-label">Numero telefonico de contacto <span class="text-danger">*</span></label>
+				    <div class="col-xs-12 col-sm-12 col-md-7 col-lg-7">
+				      <input type="text" class="form-control" id="numero_de_contacto" name="numero_de_contacto" required="" placeholder="Numero telefonico de contacto">
+				    </div>
+				</div>
+            </div>
+            <div class="row lineauno">
+				<div class="form-group">
+				    <label for="direccion_genera_acu" class="col-xs-12 col-sm-12 col-md-5 col-lg-5 control-label">Dirección del sitio donde se genera ACU <span class="text-danger">*</span></label>
+				    <div class="col-xs-12 col-sm-12 col-md-7 col-lg-7">
+				      <input type="text" class="form-control" id="direccion_genera_acu" name="direccion_genera_acu" required="" placeholder="Dirección del sitio donde se genera ACU">
+				    </div>
+				</div>
+            </div>
+            <div class="row  lineados">
+				<div class="form-group">
+				    <label for="municipio_distrito_departamento" class="col-xs-12 col-sm-12 col-md-5 col-lg-5 control-label">Municipio o distrito, departamento <span class="text-danger">*</span></label>
+				    <div class="col-xs-12 col-sm-12 col-md-7 col-lg-7">
+				      <input type="text" class="form-control" id="municipio_distrito_departamento" name="municipio_distrito_departamento" required="" placeholder="Municipio o distrito, departamento">
+				    </div>
+				</div>
+            </div>   
+             <div class="row  lineados">
+				<div class="form-group">
+				    <label for="cordenadas_de_actividad" class="col-xs-12 col-sm-12 col-md-5 col-lg-5 control-label">Coordenadas de donde se ejecuta la actividad. <br><span style="font-size: 11px; color: #FF7F00; font-weight: normal;">La Corporación Autónoma Regional del Atlántico CRA tiene jurisdicción
+en los municipios del Atlántico y si el establecimiento que desea
+registrar se encuentra ubicado en el área rural de Barranquilla debe
+registrar las coordenadas para definir jurisdicción</span></label>
+				    
+				    <div class="col-xs-12 col-sm-12 col-md-3 col-lg-3">
+				      <input type="text" class="form-control" id="latitud" name="latitud" required="" placeholder="Latitud">
+				    </div>
+				    <div class="col-xs-12 col-sm-12 col-md-4 col-lg-4">
+				      <input type="text" class="form-control" id="longitud" name="longitud" required="" placeholder="Longitud">
+				    </div>
+				    &nbsp;&nbsp;&nbsp;&nbsp;Obtener coordenadas en <a href="https://www.coordenadas-gps.com/" target="_blank">www.coordenadas-gps.com</a>
+				</div>
+            </div>
+
+            <div class="row  lineauno">
+				<div class="form-group">
+				    <label for="actividad_ejecutada_por_el_gestor_de_acu" class="col-xs-12 col-sm-12 col-md-5 col-lg-5 control-label">Cantidad generada promedio en kl/men <span class="text-danger">*</span></label>
+				    <div class="col-xs-12 col-sm-12 col-md-7 col-lg-7">
+				      <input type="text" class="form-control" id="cantidad_generada" name="cantidad_generada" required="" placeholder="Cantidad generada promedio en kl/men ">
+				    </div>
+				</div>
+            </div>
+             <div class="row  lineados">
+				<div class="form-group">
+				    <label for="actividad_ejecutada_por_el_gestor_de_acu" class="col-xs-12 col-sm-12 col-md-5 col-lg-5 control-label">Tipo de negocio (actividad ejecutada) <span class="text-danger">*</span></label>
+				    <div class="col-xs-12 col-sm-12 col-md-7 col-lg-7">
+				      <input type="text" class="form-control" id="actividad_ejecutada" name="actividad_ejecutada" required="" placeholder="Tipo de negocio (actividad ejecutada) ">
+				    </div>
+				</div>
+            </div>
+             <div class="row  lineauno">
+				<div class="form-group">
+				    <label for="correo" class="col-xs-12 col-sm-12 col-md-5 col-lg-5 control-label">Correo electronico<span class="text-danger">*</span></label>
+				    <div class="col-xs-12 col-sm-12 col-md-7 col-lg-7">
+				      <input type="email" class="form-control" id="correo" name="correo" required="" placeholder="Correo electronico">
+				    </div>
+				</div>
+            </div>
+            
+
+            <div class="row lineados">
+                <div class="form-group col-xs-12 col-sm-12 col-md-6 col-lg-12">      
+                    <button class="btn btn-primary" id="boton" name="boton" type="submit">
+                        Enviar
+                    </button>
+                    <input name="action" type="hidden" value="upload">
+                </div>
+                <div class="form-group col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                    <label><span style="font-size:12px; color: #009900;">* Campo Obligatorio</span></label>
+                </div>
+                <div class="form-group col-xs-12 col-sm-12 col-md-12 col-lg-12" id="msjRespuesta"></div>
+            </div>  
+            <div class="row lineauno">
+             	<div class="form-group col-xs-12 col-sm-12 col-md-6 col-lg-12"> 
+					 <a href="listarregistrogeneradoresacu.php"> <i class="fa fa-list-ul"></i> Lista de generadores industriales, comerciales y de servicios ACU inscritos</a>
+				</div>
+			</div>
+        </form>

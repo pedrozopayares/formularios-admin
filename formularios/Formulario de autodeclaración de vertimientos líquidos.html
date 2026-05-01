@@ -1,0 +1,596 @@
+<form role="form" id="nuevoregistro" name="nuevoregistro" action="registrardatovertim.php" method="post" enctype="multipart/form-data">
+            <div class="row">
+            	<div class="form-group col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                    <h2 class="page-header">
+                        <i class="fa fa-pencil-square-o" aria-hidden="true"></i> FORMULARIO DE AUTODECLARACIÓN DE VERTIMIENTOS LIQUIDOS
+                    </h2>
+                    <p>Señor Usuario antes de diligenciar el Formulario, favor leer el Instructivo adjunto. Una vez diligenciado debe ser enviado a la C.R.A., con los anexos pertinente para ser radicado en ventanilla unica. Recuerde que la fecha límite para este tramite es el último día habil del primer mes del año.  </p>
+                </div>
+            </div>
+            <div class="panel panel-default">
+				<div class="panel-heading">
+				    <h3 class="panel-title">1. INFORMACIÓN GENERAL DEL USUARIO </h3>
+				</div>
+				<div class="panel-body">
+					<div class="row">
+		            	<div class="form-group col-xs-12 col-sm-12 col-md-6 col-lg-6">
+						    <label for="nombre_o_razon_social" class="control-label">Nombre o razon social <span class="text-danger">*</span></label><br>
+						    <input type="text" class="form-control" id="nombre_o_razon_social" name="nombre_o_razon_social" required="" placeholder="Nombre o razon social">
+						</div>
+						<div class="form-group col-xs-12 col-sm-12 col-md-6 col-lg-6">
+						    <label for="anoderepote" class="control-label"> Año de Reporte de Autodeclaración: <span class="text-danger">*</span></label><br>
+						    <input type="text" class="form-control" id="anoderepote" name="anoderepote" required="" placeholder="Año de Reporte de Autodeclaración">
+						</div>
+					</div>
+					<div class="row">
+						<div class="form-group col-xs-12 col-sm-12 col-md-6 col-lg-6">
+						    <label for="numero_de_identificacion_o_nit" class="control-label">No de Identificación (C.C. o Nit) <span class="text-danger">*</span></label><br>
+						    <input type="text" class="form-control" id="numero_de_identificacion_o_nit" name="numero_de_identificacion_o_nit" required="" placeholder="Número de identificación o NIT">
+						</div>
+		            	<div class="form-group col-xs-12 col-sm-12 col-md-6 col-lg-6">
+						    <label for="dvdigitoverf" class="control-label">DV (Digito de Verificación) <span class="text-danger">*</span></label><br>
+						    <input type="text" class="form-control" id="dvdigitoverf" name="dvdigitoverf" required="" placeholder="DV (Digito de Verificación)">
+						</div>						
+					</div>
+					<div class="row">
+						<div class="form-group col-xs-12 col-sm-12 col-md-6 col-lg-6">
+						    <label for="representante_legal" class="control-label">Representante legal <span class="text-danger">*</span></label><br>
+						    <input type="text" class="form-control" id="representante_legal" name="representante_legal" required="" placeholder="Representante legal">
+						</div>
+		            	<div class="form-group col-xs-12 col-sm-12 col-md-6 col-lg-6">
+						    <label for="numero_de_id_rp_legal" class="control-label">Número de Identificación de Representante Legal:  <span class="text-danger">*</span></label><br>
+						    <input type="text" class="form-control" id="numero_de_id_rp_legal" name="numero_de_id_rp_legal" required="" placeholder="Número de Identificación de Representante Legal">
+						</div>			
+					</div>
+					<div class="row">
+						<div class="form-group col-xs-12 col-sm-12 col-md-6 col-lg-6">
+						    <label for="direccion" class="control-label">Dirección de Correspondencia <span class="text-danger">*</span></label><br>
+						    <input type="text" class="form-control" id="direccion" name="direccion" required="" placeholder="Dirección de Correspondencia">
+						</div>
+		            	<div class="form-group col-xs-12 col-sm-12 col-md-6 col-lg-6">
+						    <label for="municipio_o_corregimiento" class="control-label">Municipio y/o Corregimiento <span class="text-danger">*</span></label><br>
+						    <input type="text" class="form-control" id="municipio_o_corregimiento" name="municipio_o_corregimiento" required="" placeholder="Municipio y/o Corregimiento">
+						</div>	
+					</div>
+					<div class="row">
+						<div class="form-group col-xs-12 col-sm-12 col-md-6 col-lg-6">
+						    <label for="numero_de_contacto" class="control-label">Teléfono y/o No. de Celular de contacto: <span class="text-danger">*</span></label><br>
+						    <input type="text" class="form-control" id="numero_de_contacto" name="numero_de_contacto" required="" placeholder="Teléfono y/o No. de Celular de contacto:">
+						</div>
+		            	<div class="form-group col-xs-12 col-sm-12 col-md-6 col-lg-6">
+						    <label for="correo" class="control-label">Correo electrónico <span class="text-danger">*</span></label><br>
+						    <input type="email" class="form-control" id="correo" name="correo" required="" placeholder="Correo">
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="panel panel-default">
+				<div class="panel-heading">
+				    <h3 class="panel-title">2. INFORMACIÓN DE LA EMPRESA </h3>
+				</div>
+				<div class="panel-body">
+					<div class="row">
+		            	<div class="form-group col-xs-12 col-sm-12 col-md-3 col-lg-3">
+						    <label for="tipo_industria" class="control-label">Tipo de Industria: <span class="text-danger">*</span></label><br>
+						    <input type="text" class="form-control" id="tipo_industria" name="tipo_industria" required="" placeholder="Tipo de Industria:">
+						</div>
+						<div class="form-group col-xs-12 col-sm-12 col-md-3 col-lg-3">
+						    <label for="codigo_ciiu" class="control-label">Código CIIU: <span class="text-danger">*</span></label><br>
+						    <input type="text" class="form-control" id="codigo_ciiu" name="codigo_ciiu" required="" placeholder="Código CIIU:">
+						</div>
+						<div class="form-group col-xs-12 col-sm-12 col-md-3 col-lg-3">
+						    <label for="numero_turnos_dia" class="control-label"> No. de turnos/día: <span class="text-danger">*</span></label><br>
+						    <input type="text" class="form-control" id="numero_turnos_dia" name="numero_turnos_dia" required="" placeholder=" No. de turnos/día:">
+						</div>
+						<div class="form-group col-xs-12 col-sm-12 col-md-3 col-lg-3">
+						    <label for="numero_emplados_turnos" class="control-label">No.de Empleados/turno: <span class="text-danger">*</span></label><br>
+						    <input type="text" class="form-control" id="numero_emplados_turnos" name="numero_emplados_turnos" required="" placeholder="No.de Empleados/turno:">
+						</div>						
+					</div>
+				</div>
+			</div>
+											
+
+			<div class="panel panel-default">
+				<div class="panel-heading">
+				    <h3 class="panel-title">3.  DATOS DE CONCESIÓN DE AGUA Y/O FUENTE DE ABASTECIMIENTO </h3>
+				</div>
+				<div class="panel-body">
+					<div class="row">
+						<div class="form-group col-xs-12 col-sm-12 col-md-3 col-lg-3">
+						    <label for="resolucion_de_concesion" class="control-label">Resolución de Concesión: </label><br>	
+						    <input type="text" class="form-control" id="resolucion_de_concesion" name="resolucion_de_concesion" placeholder="Resolución de Concesión:">
+						</div>
+						<div class="form-group col-xs-12 col-sm-12 col-md-3 col-lg-3">
+		                    <div class="form-group">								                     
+		                        <label for="varias_concesiones">Varias concesiones: </label><br>	
+		                        <label class="radio-inline"><input type="radio" name="varias_concesiones" id="varias_concesiones" value="SI">SI</label>&nbsp;&nbsp;&nbsp;
+								<label class="radio-inline"><input type="radio" name="varias_concesiones" id="varias_concesiones" value="NO">NO</label>	
+		                    </div>
+		                </div>
+						
+						<div class="form-group col-xs-12 col-sm-12 col-md-3 col-lg-3">
+						    <label for="consumo_de_agua_m3ano" class="control-label"> Consumo de agua (m3/año): </label><br>	
+						    <input type="text" class="form-control" id="consumo_de_agua_m3ano" name="consumo_de_agua_m3ano" placeholder="Consumo de agua (m3/año)">
+						</div>
+						<div class="form-group col-xs-12 col-sm-12 col-md-3 col-lg-3">
+						    <label for="empresa_sp_que_la_suministra" class="control-label">Empresa de Servicio Público  que la suministra: </label><br>	
+						    <input type="text" class="form-control" id="empresa_sp_que_la_suministra" name="empresa_sp_que_la_suministra" placeholder="Empresa de Servicio Público  que la suministra:">
+						</div>		
+					</div>
+					<div class="row lineauno">
+		            	<div class="form-group col-xs-12 col-sm-12 col-md-6 col-lg-6">						    
+		            		<label for="coordenadas" class="control-label">Coordenadas del Punto de Captación (Planas Magna Sirgas Origen Nacional): </label><br>
+		            		<div class="row">
+		            			<div class="form-group col-xs-12 col-sm-12 col-md-5 col-lg-5">
+							      	<input type="text" class="form-control" id="coordenadasx" name="coordenadasx" placeholder="Coordenadas X:">
+							  	</div>
+							  	<div class="form-group col-xs-12 col-sm-12 col-md-5 col-lg-5">
+							      	<input type="text" class="form-control" id="coordenadasy" name="coordenadasy" placeholder="Coordenadas Y:">
+							  	</div>
+							 </div>
+						</div>
+						<div class="form-group col-xs-12 col-sm-12 col-md-6 col-lg-6">
+						    <label for="laboratorio" class="control-label">Laboratorio que realiza los análisis y Resolución que lo acredita: </label><br>
+						    <input type="text" class="form-control" id="laboratorio" name="laboratorio" placeholder="Laboratorio:">
+						</div>				
+					</div>
+					<div class="row lineados">
+		            	<div class="form-group col-xs-12 col-sm-12 col-md-6 col-lg-6">
+						    <label for="tipo_marca_sis_medicion_reg_caudal" class="control-label">Tipo y Marca del sistema de medición y registro de caudal: </label><br>
+						    <input type="text" class="form-control" id="tipo_marca_sis_medicion_reg_caudal" name="tipo_marca_sis_medicion_reg_caudal" placeholder="Tipo y Marca del sistema de medición y registro de caudal">
+						</div>
+						<div class="form-group col-xs-12 col-sm-12 col-md-2 col-lg-2">
+						    <label for="modelo" class="control-label">Modelo: </label><br>
+						    <input type="text" class="form-control" id="modelo" name="modelo" placeholder="Modelo:">
+						</div>
+						<div class="form-group col-xs-12 col-sm-12 col-md-2 col-lg-2">
+						    <label for="serie" class="control-label">Série: </label><br>
+						    <input type="text" class="form-control" id="serie" name="serie" placeholder="Série">
+						</div>		
+						<div class="form-group col-xs-12 col-sm-12 col-md-2 col-lg-2">
+						    <label for="fecha_instalacion" class="control-label">Fecha de Instalación: </label><br>
+						    <input type="date" class="form-control" id="fecha_instalacion" name="fecha_instalacion" placeholder="Fecha de Instalación">
+						</div>						
+					</div>
+
+					<div class="row lineauno">
+		            	<div class="form-group col-xs-12 col-sm-12 col-md-3 col-lg-3">
+						    <label for="fecha_de_calibracion" class="control-label">Fecha de calibración: </label><br>
+						    <input type="date" class="form-control" id="fecha_de_calibracion" name="fecha_de_calibracion" placeholder="Fecha de calibración">
+						</div>
+						<div class="form-group col-xs-12 col-sm-12 col-md-3 col-lg-3">
+		                    <div class="form-group">								                     
+		                        <label for="vigencia_superior_dos_anos">Vigencia superior a dos años: </label><br>		
+		                        <label class="radio-inline"><input type="radio" name="vigencia_superior_dos_anos" id="vigencia_superior_dos_anos" value="SI">SI</label>&nbsp;&nbsp;&nbsp;
+								<label class="radio-inline"><input type="radio" name="vigencia_superior_dos_anos" id="vigencia_superior_dos_anos" value="NO">NO</label>	
+		                    </div>
+		                </div>
+						<div class="form-group col-xs-12 col-sm-12 col-md-6 col-lg-6">
+						    <label for="empresa_que_realiza_la_calibracion" class="control-label">Empresa que realiza la Calibración:	 </label><br>
+						    <input type="text" class="form-control" id="empresa_que_realiza_la_calibracion" name="empresa_que_realiza_la_calibracion" placeholder="Empresa que realiza la Calibración:">
+						</div>
+					</div>
+					<div class="row lineauno">
+						<div class="form-group col-xs-12 col-sm-12 col-md-12 col-lg-12">
+							<table class="table table-striped">
+								<thead>
+								    <tr>
+								      <th scope="col">MES</th>
+								      <th scope="col">Enero</th>
+								      <th scope="col">Febrero</th>
+								      <th scope="col">Marzo</th>
+								      <th scope="col">Abril</th>
+								      <th scope="col">Mayo</th>
+								      <th scope="col">Junio</th>
+								      <th scope="col">Julio</th>
+								      <th scope="col">Agosto</th>
+								      <th scope="col">Sept</th>
+								      <th scope="col">Oct</th>
+								      <th scope="col">Nov</th>
+								      <th scope="col">Dic</th>				
+
+								    </tr>
+								</thead>
+								<tbody>
+								    <tr>
+								      <th scope="row">Promedio mensual DBO5 (mg/L)</th>
+								      <td><input type="text" class="form-control" id="enero1" name="enero1"></td>
+								      <td><input type="text" class="form-control" id="febrero1" name="febrero1"></td>
+								      <td><input type="text" class="form-control" id="marzo1" name="marzo1"></td>
+								      <td><input type="text" class="form-control" id="abril1" name="abril1"></td>
+								      <td><input type="text" class="form-control" id="mayo1" name="mayo1"></td>
+								      <td><input type="text" class="form-control" id="junio1" name="junio1"></td>
+								      <td><input type="text" class="form-control" id="julio1" name="julio1"></td>
+								      <td><input type="text" class="form-control" id="agosto1" name="agosto1"></td>
+								      <td><input type="text" class="form-control" id="septiembre1" name="septiembre1"></td>
+								      <td><input type="text" class="form-control" id="octubre1" name="octubre1"></td>
+								      <td><input type="text" class="form-control" id="noviembre1" name="noviembre1"></td>
+								      <td><input type="text" class="form-control" id="diciembre1" name="diciembre1"></td>
+								    </tr>
+								    <tr>
+								      <th scope="row">Promedio mensual DQO5 (mg/L)</th>
+								      <td><input type="text" class="form-control" id="enero2" name="enero2"></td>
+								      <td><input type="text" class="form-control" id="febrero2" name="febrero2"></td>
+								      <td><input type="text" class="form-control" id="marzo2" name="marzo2"></td>
+								      <td><input type="text" class="form-control" id="abril2" name="abril2"></td>
+								      <td><input type="text" class="form-control" id="mayo2" name="mayo2"></td>
+								      <td><input type="text" class="form-control" id="junio2" name="junio2"></td>
+								      <td><input type="text" class="form-control" id="julio2" name="julio2"></td>
+								      <td><input type="text" class="form-control" id="agosto2" name="agosto2"></td>
+								      <td><input type="text" class="form-control" id="septiembre2" name="septiembre2"></td>
+								      <td><input type="text" class="form-control" id="octubre2" name="octubre2"></td>
+								      <td><input type="text" class="form-control" id="noviembre2" name="noviembre2"></td>
+								      <td><input type="text" class="form-control" id="diciembre2" name="diciembre2"></td>
+								    </tr>
+								    <tr>
+								      <th scope="row">Promedio mensual SST (mg/L)	</th>
+								      <td><input type="text" class="form-control" id="enero3" name="enero3"></td>
+								      <td><input type="text" class="form-control" id="febrero3" name="febrero3"></td>
+								      <td><input type="text" class="form-control" id="marzo3" name="marzo3"></td>
+								      <td><input type="text" class="form-control" id="abril3" name="abril3"></td>
+								      <td><input type="text" class="form-control" id="mayo3" name="mayo3"></td>
+								      <td><input type="text" class="form-control" id="junio3" name="junio3"></td>
+								      <td><input type="text" class="form-control" id="julio3" name="julio3"></td>
+								      <td><input type="text" class="form-control" id="agosto3" name="agosto3"></td>
+								      <td><input type="text" class="form-control" id="septiembre3" name="septiembre3"></td>
+								      <td><input type="text" class="form-control" id="octubre3" name="octubre3"></td>
+								      <td><input type="text" class="form-control" id="noviembre3" name="noviembre3"></td>
+								      <td><input type="text" class="form-control" id="diciembre3" name="diciembre3"></td>
+								    </tr>
+								    <tr>
+								      <th scope="row">Tiempo de Uso (horas /día)</th>
+								      <td><input type="text" class="form-control" id="enero4" name="enero4"></td>
+								      <td><input type="text" class="form-control" id="febrero4" name="febrero4"></td>
+								      <td><input type="text" class="form-control" id="marzo4" name="marzo4"></td>
+								      <td><input type="text" class="form-control" id="abril4" name="abril4"></td>
+								      <td><input type="text" class="form-control" id="mayo4" name="mayo4"></td>
+								      <td><input type="text" class="form-control" id="junio4" name="junio4"></td>
+								      <td><input type="text" class="form-control" id="julio4" name="julio4"></td>
+								      <td><input type="text" class="form-control" id="agosto4" name="agosto4"></td>
+								      <td><input type="text" class="form-control" id="septiembre4" name="septiembre4"></td>
+								      <td><input type="text" class="form-control" id="octubre4" name="octubre4"></td>
+								      <td><input type="text" class="form-control" id="noviembre4" name="noviembre4"></td>
+								      <td><input type="text" class="form-control" id="diciembre4" name="diciembre4"></td>
+								    </tr>
+								    <tr>
+								      <th scope="row">Periodo de Uso (días / mes)</th>
+								      <td><input type="text" class="form-control" id="enero5" name="enero5"></td>
+								      <td><input type="text" class="form-control" id="febrero5" name="febrero5"></td>
+								      <td><input type="text" class="form-control" id="marzo5" name="marzo5"></td>
+								      <td><input type="text" class="form-control" id="abril5" name="abril5"></td>
+								      <td><input type="text" class="form-control" id="mayo5" name="mayo5"></td>
+								      <td><input type="text" class="form-control" id="junio5" name="junio5"></td>
+								      <td><input type="text" class="form-control" id="julio5" name="julio5"></td>
+								      <td><input type="text" class="form-control" id="agosto5" name="agosto5"></td>
+								      <td><input type="text" class="form-control" id="septiembre5" name="septiembre5"></td>
+								      <td><input type="text" class="form-control" id="octubre5" name="octubre5"></td>
+								      <td><input type="text" class="form-control" id="noviembre5" name="noviembre5"></td>
+								      <td><input type="text" class="form-control" id="diciembre5" name="diciembre5"></td>
+								    </tr>
+								    <tr>
+								      <th scope="row">Caudal promedio en el mes (L/s)	</th>
+								      <td><input type="text" class="form-control" id="enero6" name="enero6"></td>
+								      <td><input type="text" class="form-control" id="febrero6" name="febrero6"></td>
+								      <td><input type="text" class="form-control" id="marzo6" name="marzo6"></td>
+								      <td><input type="text" class="form-control" id="abril6" name="abril6"></td>
+								      <td><input type="text" class="form-control" id="mayo6" name="mayo6"></td>
+								      <td><input type="text" class="form-control" id="junio6" name="junio6"></td>
+								      <td><input type="text" class="form-control" id="julio6" name="julio6"></td>
+								      <td><input type="text" class="form-control" id="agosto6" name="agosto6"></td>
+								      <td><input type="text" class="form-control" id="septiembre6" name="septiembre6"></td>
+								      <td><input type="text" class="form-control" id="octubre6" name="octubre6"></td>
+								      <td><input type="text" class="form-control" id="noviembre6" name="noviembre6"></td>
+								      <td><input type="text" class="form-control" id="diciembre6" name="diciembre6"></td>
+								    </tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+	
+			<div class="panel panel-default">
+				<div class="panel-heading">
+				    <h3 class="panel-title">4.  DATOS DEL SISTEMA DE TRATAMIENTO DE AGUAS RESIDUALES</h3>
+				</div>
+				<div class="panel-body">
+					<div class="row">
+						<div class="form-group col-xs-12 col-sm-12 col-md-3 col-lg-3">								                     
+	                        <label for="tipo_de_aguas_residuales">Tipo de aguas Residuales: </label><br>	
+	                        <label class="radio-inline"><input type="radio" name="tipo_de_aguas_residuales" id="tipo_de_aguas_residuales" value="Domesticas">Domesticas</label>&nbsp;&nbsp;&nbsp;
+							<label class="radio-inline"><input type="radio" name="tipo_de_aguas_residuales" id="tipo_de_aguas_residuales" value="Indsutriales">Indsutriales</label>
+		                </div>
+		                <div class="form-group col-xs-12 col-sm-12 col-md-6 col-lg-6">                    
+	                        <label for="tipo_de_aguas_residuales">Tipo de tratamiento de aguas Residuales: </label><br>	
+	                        <label class="radio-inline"><input type="radio" name="tipo_trata_aguas_residuales" id="tipo_trata_aguas_residuales" value="Primario">Primario</label>&nbsp;&nbsp;&nbsp;
+							<label class="radio-inline"><input type="radio" name="tipo_trata_aguas_residuales" id="tipo_trata_aguas_residuales" value="Secundario">Secundario</label>&nbsp;&nbsp;&nbsp;
+							<label class="radio-inline"><input type="radio" name="tipo_trata_aguas_residuales" id="tipo_trata_aguas_residuales" value="Terciario">Terciario</label>&nbsp;&nbsp;&nbsp;
+							<label class="radio-inline"><input type="radio" name="tipo_trata_aguas_residuales" id="tipo_trata_aguas_residuales" value="Sin ningún tratamiento">Sin ningún tratamiento</label>&nbsp;&nbsp;&nbsp;
+		                </div>
+		                <div class="form-group col-xs-12 col-sm-12 col-md-3 col-lg-3">
+						    <label for="personal_responsable">Personal responsable: </label><br>	
+						    <input type="text" class="form-control" id="personal_responsable" name="personal_responsable" placeholder="Personal responsable">
+						</div>	
+						 <div class="form-group col-xs-12 col-sm-12 col-md-12 col-lg-12 ">
+						    <label for="descripcion_sis_de_tratamiento_de_aguas_residuales" class="control-label">Descirpción del Sistema de tratamiento de aguas Residuales: </label><br>	
+						    <textarea name="descripcion_sis_de_tratamiento_de_aguas_residuales" id="descripcion_sis_de_tratamiento_de_aguas_residuales" class="form-control" rows="3"></textarea>
+						</div>
+					</div>
+
+					<div class="row lineados">
+		            	<div class="form-group col-xs-12 col-sm-12 col-md-6 col-lg-6">
+						    <label for="tipo_marca_sis_medicion_reg_vertimiento" class="control-label">Tipo  y Marca del sistema de medición y registro de vertimiento: </label><br>
+						    <input type="text" class="form-control" id="tipo_marca_sis_medicion_reg_vertimiento" name="tipo_marca_sis_medicion_reg_vertimiento" placeholder="Tipo  y Marca del sistema de medición y registro de vertimiento">
+						</div>
+						<div class="form-group col-xs-12 col-sm-12 col-md-2 col-lg-2">
+						    <label for="modelo_vertimiento" class="control-label">Modelo: </label><br>
+						    <input type="text" class="form-control" id="modelo_vertimiento" name="modelo_vertimiento" placeholder="Modelo:">
+						</div>
+						<div class="form-group col-xs-12 col-sm-12 col-md-2 col-lg-2">
+						    <label for="serie_vertimiento" class="control-label">Série: </label><br>
+						    <input type="text" class="form-control" id="serie_vertimiento" name="serie_vertimiento" placeholder="Série">
+						</div>		
+						<div class="form-group col-xs-12 col-sm-12 col-md-2 col-lg-2">
+						    <label for="fecha_instalacion_vertimiento" class="control-label">Fecha de Instalación: </label><br>
+						    <input type="date" class="form-control" id="fecha_instalacion_vertimiento" name="fecha_instalacion_vertimiento" placeholder="Fecha de Instalación">
+						</div>						
+					</div>
+					<div class="row lineauno">
+		            	<div class="form-group col-xs-12 col-sm-12 col-md-3 col-lg-3">
+						    <label for="fecha_de_calibracion_tratamineto" class="control-label">Fecha de calibración: </label><br>
+						    <input type="date" class="form-control" id="fecha_de_calibracion_tratamineto" name="fecha_de_calibracion_tratamineto" placeholder="Fecha de calibración">
+						</div>
+						<div class="form-group col-xs-12 col-sm-12 col-md-3 col-lg-3">
+		                    <div class="form-group">								                     
+		                        <label for="vigencia_superior_dos_anos_vertimiento">Vigencia superior a dos años: </label><br>		
+		                        <label class="radio-inline"><input type="radio" name="vigencia_superior_dos_anos_vertimiento" id="vigencia_superior_dos_anos_vertimiento" value="SI">SI</label>&nbsp;&nbsp;&nbsp;
+								<label class="radio-inline"><input type="radio" name="vigencia_superior_dos_anos_vertimiento" id="vigencia_superior_dos_anos_vertimiento" value="NO">NO</label>	
+		                    </div>
+		                </div>
+						<div class="form-group col-xs-12 col-sm-12 col-md-6 col-lg-6">
+						    <label for="empresa_que_realiza_la_calibracion_vertimiento" class="control-label">Empresa que realiza la Calibración:	 </label><br>
+						    <input type="text" class="form-control" id="empresa_que_realiza_la_calibracion_vertimiento" name="empresa_que_realiza_la_calibracion_vertimiento" placeholder="Empresa que realiza la Calibración:">
+						</div>
+					</div>
+
+				</div>
+			</div>
+			<div class="panel panel-default">
+				<div class="panel-heading">
+				    <h3 class="panel-title">5.  DATOS DEL VERTIMIENTO LIQUIDO</h3>
+				</div>
+				<div class="panel-body">
+					<div class="row">
+						<div class="form-group col-xs-12 col-sm-12 col-md-3 col-lg-3">
+						    <label for="res_de_permiso_vertimiento" class="control-label">Res. de Permiso de Vertimiento No.: </label><br>	
+						    <input type="text" class="form-control" id="res_de_permiso_vertimiento" name="res_de_permiso_vertimiento" placeholder="Res. de Permiso de Vertimiento No.:">
+						</div>
+						<div class="form-group col-xs-12 col-sm-12 col-md-3 col-lg-3">
+		                    <div class="form-group">								                     
+		                        <label for="varios_permisos">Varios Permisos: </label><br>	
+		                        <label class="radio-inline"><input type="radio" name="varios_permisos" id="varios_permisos" value="SI">SI</label>&nbsp;&nbsp;&nbsp;
+								<label class="radio-inline"><input type="radio" name="varios_permisos" id="varios_permisos" value="NO">NO</label>	
+		                    </div>
+		                </div>
+						
+						<div class="form-group col-xs-12 col-sm-12 col-md-3 col-lg-3">
+						    <label for="agua_residual_m3ano" class="control-label"> Agua Residual (m3/año): </label><br>	
+						    <input type="text" class="form-control" id="agua_residual_m3ano" name="agua_residual_m3ano" placeholder="Agua Residual (m3/año)">
+						</div>
+						<div class="form-group col-xs-12 col-sm-12 col-md-3 col-lg-3">
+						    <label for="empresa_sp_que_la_recibe" class="control-label">Empresa de  Servicio Público que la recibe: </label><br>	
+						    <input type="text" class="form-control" id="empresa_sp_que_la_recibe" name="empresa_sp_que_la_recibe" placeholder="Empresa de  Servicio Público que la recibe: ">
+						</div>		
+					</div>
+					<div class="row lineauno">
+		            	<div class="form-group col-xs-12 col-sm-12 col-md-6 col-lg-6">						    
+		            		<label for="coordenadas_pdv_x" class="control-label">Coordenadas del Punto de descargas del Vertimiento (Planas Magna Sirgas Origen Nacional): </label><br>
+		            		<div class="row">
+		            			<div class="form-group col-xs-12 col-sm-12 col-md-5 col-lg-5">
+							      	<input type="text" class="form-control" id="coordenadas_pdv_x" name="coordenadas_pdv_x" placeholder="Coordenadas X:">
+							  	</div>
+							  	<div class="form-group col-xs-12 col-sm-12 col-md-5 col-lg-5">
+							      	<input type="text" class="form-control" id="coordenadas_pdv_y" name="coordenadas_pdv_y" placeholder="Coordenadas Y:">
+							  	</div>
+							 </div>
+						</div>
+						<div class="form-group col-xs-12 col-sm-12 col-md-6 col-lg-6">						    
+		            		<label for="coordenadas_pmv_x" class="control-label">Coordenadas del Punto de muestreo del Vertimiento (Planas Magna Sirgas Origen Nacional): </label><br>
+		            		<div class="row">
+		            			<div class="form-group col-xs-12 col-sm-12 col-md-5 col-lg-5">
+							      	<input type="text" class="form-control" id="coordenadas_pmv_x" name="coordenadas_pmv_x" placeholder="Coordenadas X:">
+							  	</div>
+							  	<div class="form-group col-xs-12 col-sm-12 col-md-5 col-lg-5">
+							      	<input type="text" class="form-control" id="coordenadas_pmv_y" name="coordenadas_pmv_y" placeholder="Coordenadas Y:">
+							  	</div>
+							 </div>
+						</div>									
+					</div>
+					<div class="row">
+						<div class="form-group col-xs-12 col-sm-12 col-md-6 col-lg-6">
+						    <label for="laboratorio_que_realiza_analisis" class="control-label">Laboratorio de Calidad que realiza los análisis: </label><br>	
+						    <input type="text" class="form-control" id="laboratorio_que_realiza_analisis" name="laboratorio_que_realiza_analisis" placeholder="Laboratorio de Calidad que realiza los análisis:">
+						</div>
+						<div class="form-group col-xs-12 col-sm-12 col-md-6 col-lg-6">
+						    <label for="res_acredita_laboratorio_calidad" class="control-label">Resolución que acredita al Laboratorio de Calidad de Aguas:	 </label><br>	
+						    <input type="text" class="form-control" id="res_acredita_laboratorio_calidad" name="res_acredita_laboratorio_calidad" placeholder="Resolución que acredita al Laboratorio de Calidad de Aguas:">
+						</div>	
+					</div>
+					<div class="row lineauno">
+						<div class="form-group col-xs-12 col-sm-12 col-md-12 col-lg-12">
+							<table class="table table-striped">
+								<thead>
+								    <tr>
+								      <th scope="col">MES</th>
+								      <th scope="col">Enero</th>
+								      <th scope="col">Febrero</th>
+								      <th scope="col">Marzo</th>
+								      <th scope="col">Abril</th>
+								      <th scope="col">Mayo</th>
+								      <th scope="col">Junio</th>
+								      <th scope="col">Julio</th>
+								      <th scope="col">Agosto</th>
+								      <th scope="col">Sept</th>
+								      <th scope="col">Oct</th>
+								      <th scope="col">Nov</th>
+								      <th scope="col">Dic</th>				
+
+								    </tr>
+								</thead>
+								<tbody>
+								    <tr>
+								      <th scope="row">Promedio mensual DBO5 (mg/L)</th>
+								      <td><input type="text" class="form-control" id="venero1" name="venero1"></td>
+								      <td><input type="text" class="form-control" id="vfebrero1" name="vfebrero1"></td>
+								      <td><input type="text" class="form-control" id="vmarzo1" name="vmarzo1"></td>
+								      <td><input type="text" class="form-control" id="vabril1" name="vabril1"></td>
+								      <td><input type="text" class="form-control" id="vmayo1" name="vmayo1"></td>
+								      <td><input type="text" class="form-control" id="vjunio1" name="vjunio1"></td>
+								      <td><input type="text" class="form-control" id="vjulio1" name="vjulio1"></td>
+								      <td><input type="text" class="form-control" id="vagosto1" name="vagosto1"></td>
+								      <td><input type="text" class="form-control" id="vseptiembre1" name="vseptiembre1"></td>
+								      <td><input type="text" class="form-control" id="voctubre1" name="voctubre1"></td>
+								      <td><input type="text" class="form-control" id="vnoviembre1" name="vnoviembre1"></td>
+								      <td><input type="text" class="form-control" id="vdiciembre1" name="vdiciembre1"></td>
+								    </tr>
+								    <tr>
+								      <th scope="row">Promedio mensual DQO5 (mg/L)</th>
+								      <td><input type="text" class="form-control" id="venero2" name="venero2"></td>
+								      <td><input type="text" class="form-control" id="vfebrero2" name="vfebrero2"></td>
+								      <td><input type="text" class="form-control" id="vmarzo2" name="vmarzo2"></td>
+								      <td><input type="text" class="form-control" id="vabril2" name="vabril2"></td>
+								      <td><input type="text" class="form-control" id="vmayo2" name="vmayo2"></td>
+								      <td><input type="text" class="form-control" id="vjunio2" name="vjunio2"></td>
+								      <td><input type="text" class="form-control" id="vjulio2" name="vjulio2"></td>
+								      <td><input type="text" class="form-control" id="vagosto2" name="vagosto2"></td>
+								      <td><input type="text" class="form-control" id="vseptiembre2" name="vseptiembre2"></td>
+								      <td><input type="text" class="form-control" id="voctubre2" name="voctubre2"></td>
+								      <td><input type="text" class="form-control" id="vnoviembre2" name="vnoviembre2"></td>
+								      <td><input type="text" class="form-control" id="vdiciembre2" name="vdiciembre2"></td>
+								    </tr>
+								    <tr>
+								      <th scope="row">Promedio mensual SST (mg/L)	</th>
+								      <td><input type="text" class="form-control" id="venero3" name="venero3"></td>
+								      <td><input type="text" class="form-control" id="vfebrero3" name="vfebrero3"></td>
+								      <td><input type="text" class="form-control" id="vmarzo3" name="vmarzo3"></td>
+								      <td><input type="text" class="form-control" id="vabril3" name="vabril3"></td>
+								      <td><input type="text" class="form-control" id="vmayo3" name="vmayo3"></td>
+								      <td><input type="text" class="form-control" id="vjunio3" name="vjunio3"></td>
+								      <td><input type="text" class="form-control" id="vjulio3" name="vjulio3"></td>
+								      <td><input type="text" class="form-control" id="vagosto3" name="vagosto3"></td>
+								      <td><input type="text" class="form-control" id="vseptiembre3" name="vseptiembre3"></td>
+								      <td><input type="text" class="form-control" id="voctubre3" name="voctubre3"></td>
+								      <td><input type="text" class="form-control" id="vnoviembre3" name="vnoviembre3"></td>
+								      <td><input type="text" class="form-control" id="vdiciembre3" name="vdiciembre3"></td>
+								    </tr>
+								    <tr>
+								      <th scope="row">Tiempo de Uso (horas /día)</th>
+								      <td><input type="text" class="form-control" id="venero4" name="venero4"></td>
+								      <td><input type="text" class="form-control" id="vfebrero4" name="vfebrero4"></td>
+								      <td><input type="text" class="form-control" id="vmarzo4" name="vmarzo4"></td>
+								      <td><input type="text" class="form-control" id="vabril4" name="vabril4"></td>
+								      <td><input type="text" class="form-control" id="vmayo4" name="vmayo4"></td>
+								      <td><input type="text" class="form-control" id="vjunio4" name="vjunio4"></td>
+								      <td><input type="text" class="form-control" id="vjulio4" name="vjulio4"></td>
+								      <td><input type="text" class="form-control" id="vagosto4" name="vagosto4"></td>
+								      <td><input type="text" class="form-control" id="vseptiembre4" name="vseptiembre4"></td>
+								      <td><input type="text" class="form-control" id="voctubre4" name="voctubre4"></td>
+								      <td><input type="text" class="form-control" id="vnoviembre4" name="vnoviembre4"></td>
+								      <td><input type="text" class="form-control" id="vdiciembre4" name="vdiciembre4"></td>
+								    </tr>
+								    <tr>
+								      <th scope="row">Periodo de Uso (días / mes)</th>
+								      <td><input type="text" class="form-control" id="venero5" name="venero5"></td>
+								      <td><input type="text" class="form-control" id="vfebrero5" name="vfebrero5"></td>
+								      <td><input type="text" class="form-control" id="vmarzo5" name="vmarzo5"></td>
+								      <td><input type="text" class="form-control" id="vabril5" name="vabril5"></td>
+								      <td><input type="text" class="form-control" id="vmayo5" name="vmayo5"></td>
+								      <td><input type="text" class="form-control" id="vjunio5" name="vjunio5"></td>
+								      <td><input type="text" class="form-control" id="vjulio5" name="vjulio5"></td>
+								      <td><input type="text" class="form-control" id="vagosto5" name="vagosto5"></td>
+								      <td><input type="text" class="form-control" id="vseptiembre5" name="vseptiembre5"></td>
+								      <td><input type="text" class="form-control" id="voctubre5" name="voctubre5"></td>
+								      <td><input type="text" class="form-control" id="vnoviembre5" name="vnoviembre5"></td>
+								      <td><input type="text" class="form-control" id="vdiciembre5" name="vdiciembre5"></td>
+								    </tr>
+								    <tr>
+								      <th scope="row">Caudal promedio en el mes (L/s)	</th>
+								      <td><input type="text" class="form-control" id="venero6" name="venero6"></td>
+								      <td><input type="text" class="form-control" id="vfebrero6" name="vfebrero6"></td>
+								      <td><input type="text" class="form-control" id="vmarzo6" name="vmarzo6"></td>
+								      <td><input type="text" class="form-control" id="vabril6" name="vabril6"></td>
+								      <td><input type="text" class="form-control" id="vmayo6" name="vmayo6"></td>
+								      <td><input type="text" class="form-control" id="vjunio6" name="vjunio6"></td>
+								      <td><input type="text" class="form-control" id="vjulio6" name="vjulio6"></td>
+								      <td><input type="text" class="form-control" id="vagosto6" name="vagosto6"></td>
+								      <td><input type="text" class="form-control" id="vseptiembre6" name="vseptiembre6"></td>
+								      <td><input type="text" class="form-control" id="voctubre6" name="voctubre6"></td>
+								      <td><input type="text" class="form-control" id="vnoviembre6" name="vnoviembre6"></td>
+								      <td><input type="text" class="form-control" id="vdiciembre6" name="vdiciembre6"></td>
+								    </tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+					<div class="row">
+					  <div class="form-group col-xs-12 col-sm-12 col-md-12 col-lg-12">
+					    <div class="form-group">
+					        <label class="control-label">Adjuntar archivo(s)</label>
+					        
+					        <div class="attachment-row cajainput">
+					          <input type="file" class="form-control margintop" name="attachment[]" accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,image/jpeg" onchange="return fileValidation(this.value)">
+					        </div>
+					        <div onclick="AgregarArchivos();" class="icon-add-more-attachemnt margintop" title="Agregar más archivos"> <img src="images/agregar-archivo.png" alt="Agregar más archivos"> Agregar mas archivos </div>
+					        <div class="help-block with-errors"></div>
+					      </div>
+					    </div>
+					</div>
+										
+				</div>
+			</div>
+				
+						
+
+												
+
+
+<!---
+			<div class="panel panel-default">
+				<div class="panel-heading">
+				    <h3 class="panel-title">6.    DECLARACIÓN JURAMENTADA:</h3>
+				</div>
+				<div class="panel-body">
+					
+				</div>
+			</div>--->		
+					
+				
+
+       
+       
+         
+
+
+
+
+           
+
+           <div class="row lineados" id="botonguardar">
+                <div class="form-group col-xs-6 col-sm-6 col-md-6 col-lg-12">  
+                	<div class="g-recaptcha" data-sitekey="6LeNX1spAAAAAB84iEHuF8cSa7Frgwm9qKvcQks-"></div>    
+                    <button class="btn btn-primary" id="boton" name="boton" type="submit">
+                        Enviar
+                    </button>
+                    <input name="action" type="hidden" value="upload">
+                </div>
+                <div class="form-group col-xs-6 col-sm-6 col-md-12 col-lg-12">
+                    <label><span style="font-size:12px; color: #009900;">* Campo Obligatorio</span></label>
+                </div>
+                
+            </div>
+            <div class="row">
+            	<div class="form-group col-xs-6 col-sm-6 col-md-12 col-lg-12" id="guardando"></div>
+            </div>
+             
+        </form>

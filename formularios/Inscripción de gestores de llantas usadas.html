@@ -1,0 +1,129 @@
+<form role="form" id="nuevoregistro" name="nuevoregistro" action="registrargestoresllantas.php" method="post" enctype="multipart/form-data">
+            <div class="row">
+                <div class="form-group col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                    <h2 class="page-header">
+                        <i class="fa fa-pencil-square-o" aria-hidden="true"></i> Inscripción de gestores de llantas usadas
+                    </h2>
+                </div>
+            </div>
+            <div class="row lineauno">
+            	<div class="form-group">
+				    <label for="nombre_o_razon_social" class="col-xs-12 col-sm-12 col-md-5 col-lg-5 control-label">Nombre o razon social <span class="text-danger">*</span></label>
+				    <div class="col-xs-12 col-sm-12 col-md-7 col-lg-7">
+				      <input type="text" class="form-control" id="nombre_o_razon_social" name="nombre_o_razon_social" required="" placeholder="Nombre o razon social">
+				    </div>
+				</div>
+			</div>
+			<div class="row lineados">
+				<div class="form-group">
+				    <label for="numero_de_identificacion_o_nit" class="col-xs-12 col-sm-12 col-md-5 col-lg-5 control-label">Número de identificación o NIT <span class="text-danger">*</span></label>
+				    <div class="col-xs-12 col-sm-12 col-md-7 col-lg-7">
+				      <input type="text" class="form-control" id="numero_de_identificacion_o_nit" name="numero_de_identificacion_o_nit" required="" placeholder="Número de identificación o NIT">
+				    </div>
+				</div>
+			</div>
+			<div class="row lineauno">
+				<div class="form-group">
+				    <label for="representante_legal" class="col-xs-12 col-sm-12 col-md-5 col-lg-5 control-label">Representante legal <span class="text-danger">*</span></label>
+				    <div class="col-xs-12 col-sm-12 col-md-7 col-lg-7">
+				      <input type="text" class="form-control" id="representante_legal" name="representante_legal" required="" placeholder="Representante legal">
+				    </div>
+				</div>
+            </div>
+            <div class="row lineados">
+				<div class="form-group">
+				    <label for="numero_de_contacto" class="col-xs-12 col-sm-12 col-md-5 col-lg-5 control-label">Número de teléfono de contacto <span class="text-danger">*</span></label>
+				    <div class="col-xs-12 col-sm-12 col-md-7 col-lg-7">
+				      <input type="text" class="form-control" id="numero_de_contacto" name="numero_de_contacto" required="" placeholder="Numero de contacto">
+				    </div>
+				</div>
+            </div>
+            <div class="row lineauno">
+				<div class="form-group">
+				    <label for="direccion" class="col-xs-12 col-sm-12 col-md-5 col-lg-5 control-label">Dirección <span class="text-danger">*</span></label>
+				    <div class="col-xs-12 col-sm-12 col-md-7 col-lg-7">
+				      <input type="text" class="form-control" id="direccion" name="direccion" required="" placeholder="Dirección">
+				    </div>
+				</div>
+            </div>
+            <div class="row lineados">
+				<div class="form-group">
+				    <label for="municipio_o_distrito" class="col-xs-12 col-sm-12 col-md-5 col-lg-5 control-label">Municipio o distrito y departamento <span class="text-danger">*</span></label>
+				    <div class="col-xs-12 col-sm-12 col-md-7 col-lg-7">
+				      <input type="text" class="form-control" id="municipio_o_distrito" name="municipio_o_distrito" required="" placeholder="Municipio o distrito">
+				    </div>
+				</div>
+            </div>
+            <div class="row lineauno">
+				<div class="form-group">
+				    <label for="correo" class="col-xs-12 col-sm-12 col-md-5 col-lg-5 control-label">Correo electrónico <span class="text-danger">*</span></label>
+				    <div class="col-xs-12 col-sm-12 col-md-7 col-lg-7">
+				      <input type="email" class="form-control" id="correo" name="correo" required="" placeholder="Correo electrónico">
+				    </div>
+				</div>
+            </div>
+            <div class="row lineados">
+				<div class="form-group">
+				    <label for="actividad_ejecutada_por_el_gestor_de_llantas" class="col-xs-12 col-sm-12 col-md-5 col-lg-5 control-label">Actividad ejecutada por el gestor de llantas usadas (reencauche, reciclaje, valorización de energética, otra cual <span class="text-danger">*</span></label>
+				    <div class="col-xs-12 col-sm-12 col-md-7 col-lg-7">
+				      <input type="text" class="form-control" id="actividad_ejecutada_por_el_gestor_de_llantas" name="actividad_ejecutada_por_el_gestor_de_llantas" required="" placeholder="Actividad ejecutada por el gestor de llantas ">
+				    </div>
+				</div>
+            </div>
+            <div class="row lineauno">
+				<div class="form-group">
+				    <label for="capacidad_de_almacenamiento_de_llantas_del_gestor" class="col-xs-12 col-sm-12 col-md-5 col-lg-5 control-label">Capacidad de almacenamiento en toneladas al mes del gestor (t/mes) <span class="text-danger">*</span></label>
+				    <div class="col-xs-12 col-sm-12 col-md-7 col-lg-7">
+				      <input type="text" class="form-control" id="capacidad_de_almacenamiento_de_llantas_del_gestor" name="capacidad_de_almacenamiento_de_llantas_del_gestor" required="" placeholder="Capacidad de almacenamiento de llantas del gestor (t/mes)">
+				    </div>
+				</div>
+            </div>
+            <div class="row lineados">
+				<div class="form-group">
+				    <label for="capacidad_de_aprovechamiento_de_llantas_del_gestor" class="col-xs-12 col-sm-12 col-md-5 col-lg-5 control-label">Capacidad de aprovechamiento de llantas usadas en toneladas al mes del gestor (t/mes)<span class="text-danger">*</span></label>
+				    <div class="col-xs-12 col-sm-12 col-md-7 col-lg-7">
+				      <input type="text" class="form-control" id="capacidad_de_aprovechamiento_de_llantas_del_gestor" name="capacidad_de_aprovechamiento_de_llantas_del_gestor" required="" placeholder="Capacidad de aprovechamiento de llantas usadas en toneladas al mes del gestor (t/mes)">
+				    </div>
+				</div>
+            </div>
+            
+            <div class="row lineauno">
+	            <div class="form-group">
+	            	<label for="capacidad_de_disposicion_final_de_llantas_del_gestor" class="col-xs-12 col-sm-12 col-md-5 col-lg-5 control-label"><a href="documentos/formato de solicitud de inscripcion al registro de llantas usadas.docx" target="_blank">Formato de solicitud de inscripcion al registro de llantas usadas <i class="fa fa-download" aria-hidden="true"></i></a> <span class="text-danger">*</span><br> <span style="font-size: 11px;">Descargar, diligenciar, firmar, escanear y adjuntar </span> </label>
+				    <div class="col-xs-12 col-sm-12 col-md-7 col-lg-7">
+				    	<input type="file" class="form-control-file" id="archivo" name="archivo" required="" aria-describedby="Archivo Firmado">
+				    </div>
+				</div>
+			</div>
+			<div class="row lineados">
+	            <div class="form-group">
+	            	<label for="capacidad_de_disposicion_final_de_llantas_del_gestor" class="col-xs-12 col-sm-12 col-md-5 col-lg-5 control-label"><a href="documentos/FORMATO DE CARTA PARA SOLICITAR LA INSCRIPCIÓN EN EL REGISTRO DE LLANTAS USADAS.docx" target="_blank">
+Formato de carta para solicitar la inscripción
+ <i class="fa fa-download" aria-hidden="true"></i> </a><span class="text-danger">*</span><br> <span style="font-size: 11px;">Descargar, diligenciar, firmar, escanear y adjuntar </span> </label>
+				    <div class="col-xs-12 col-sm-12 col-md-7 col-lg-7">
+				    	<input type="file" class="form-control-file" id="archivo2" name="archivo2" required="" aria-describedby="Archivo Firmado">
+				    </div>
+				</div>
+			</div>
+
+            <div class="row lineauno" id="botonguardar">
+                <div class="form-group col-xs-12 col-sm-12 col-md-6 col-lg-12">      
+                    <button class="btn btn-primary" id="boton" name="boton" type="submit">
+                        Enviar
+                    </button>
+                    <input name="action" type="hidden" value="upload">
+                </div>
+                <div class="form-group col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                    <label><span style="font-size:12px; color: #009900;">* Campo Obligatorio</span></label>
+                </div>
+                <div class="form-group col-xs-12 col-sm-12 col-md-12 col-lg-12" id="guardando"></div>
+            </div>
+            
+             <div class="row lineados">
+             	 <div class="form-group col-xs-12 col-sm-12 col-md-12 col-lg-12" id="guardando"></div>
+             	<div class="form-group col-xs-12 col-sm-12 col-md-12 col-lg-12"> 
+					<a href="listarregistrogestoresllantas.php">Lista de gestores de llantas-Escombros inscritos</a>
+				</div>
+			</div>
+  			
+        </form>
