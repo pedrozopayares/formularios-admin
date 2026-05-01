@@ -639,6 +639,45 @@ function formularios_format_field_value($value, array $field): string {
         return $value ? '✅ Sí' : '❌ No';
     }
 
+    // File field: render as link
+    if ($field['type'] === 'file') {
+        $file_url = '';
+        if (is_numeric($value)) {
+            // Value is attachment ID
+            $file_url = wp_get_attachment_url($value);
+        } else if (is_string($value) && (strpos($value, 'http') === 0 || strpos($value, '/') === 0)) {
+            // Value is URL
+            $file_url = $value;
+        }
+
+        if (!empty($file_url)) {
+            $filename = basename($file_url);
+            return '<a href="' . esc_url($file_url) . '" target="_blank" rel="noopener noreferrer" style="color:#0073aa;text-decoration:none;font-weight:500">' . esc_html($filename) . ' ↗</a>';
+        }
+        return '<span style="color:#999">—</span>';
+    }
+
+    // Image field: render as thumbnail link
+    if ($field['type'] === 'image') {
+        $image_url = '';
+        if (is_numeric($value)) {
+            // Value is attachment ID
+            $image_url = wp_get_attachment_url($value);
+        } else if (is_array($value) && isset($value['url'])) {
+            // Value is image array
+            $image_url = $value['url'];
+        } else if (is_string($value) && (strpos($value, 'http') === 0 || strpos($value, '/') === 0)) {
+            // Value is URL
+            $image_url = $value;
+        }
+
+        if (!empty($image_url)) {
+            $filename = basename($image_url);
+            return '<a href="' . esc_url($image_url) . '" target="_blank" rel="noopener noreferrer" style="color:#0073aa;text-decoration:none;font-weight:500">' . esc_html($filename) . ' ↗</a>';
+        }
+        return '<span style="color:#999">—</span>';
+    }
+
     // Truncate long text
     $str = (string) $value;
     if (mb_strlen($str) > 80) {
