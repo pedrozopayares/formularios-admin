@@ -839,6 +839,16 @@ function formularios_flatten_field_value($value, array $field): string {
         return '';
     }
 
+    // File field: extract URL
+    if ($field['type'] === 'file') {
+        return formularios_extract_file_url($value);
+    }
+
+    // Image field: extract URL
+    if ($field['type'] === 'image') {
+        return formularios_extract_image_url($value);
+    }
+
     if ($field['type'] === 'true_false') {
         return $value ? 'Sí' : 'No';
     }
@@ -854,6 +864,52 @@ function formularios_flatten_field_value($value, array $field): string {
     }
 
     return (string) $value;
+}
+
+/**
+ * Extract file URL from various value formats.
+ */
+function formularios_extract_file_url($value): string {
+    if (is_numeric($value)) {
+        // Value is attachment ID
+        $url = wp_get_attachment_url($value);
+        return $url ? $url : '';
+    } else if (is_array($value)) {
+        // Value is attachment array
+        if (isset($value['url']) && !empty($value['url'])) {
+            return $value['url'];
+        } else if (isset($value['ID'])) {
+            $url = wp_get_attachment_url($value['ID']);
+            return $url ? $url : '';
+        }
+    } else if (is_string($value) && (strpos($value, 'http') === 0 || strpos($value, '/') === 0)) {
+        // Value is URL string
+        return $value;
+    }
+    return '';
+}
+
+/**
+ * Extract image URL from various value formats.
+ */
+function formularios_extract_image_url($value): string {
+    if (is_numeric($value)) {
+        // Value is attachment ID
+        $url = wp_get_attachment_url($value);
+        return $url ? $url : '';
+    } else if (is_array($value)) {
+        // Value is image array
+        if (isset($value['url']) && !empty($value['url'])) {
+            return $value['url'];
+        } else if (isset($value['ID'])) {
+            $url = wp_get_attachment_url($value['ID']);
+            return $url ? $url : '';
+        }
+    } else if (is_string($value) && (strpos($value, 'http') === 0 || strpos($value, '/') === 0)) {
+        // Value is URL string
+        return $value;
+    }
+    return '';
 }
 
 
