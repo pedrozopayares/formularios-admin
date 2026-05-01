@@ -28,6 +28,7 @@ class Formularios_ACF_Forms_Bridge {
         add_action('eff_post_file_uploads',            [__CLASS__, 'on_post_uploads'],         10, 3);
         add_action('eff_after_attachment_created',     [__CLASS__, 'on_attachment_created'],   10, 4);
         add_action('eff_before_finalize_attachments',  [__CLASS__, 'on_before_finalize'],      10, 3);
+        add_action('eff_after_submission',             [__CLASS__, 'on_after_submission'],     10, 3);
     }
 
     /**
@@ -200,5 +201,73 @@ class Formularios_ACF_Forms_Bridge {
                 }
             }
         }
+    }
+
+    /**
+     * Send user notification email after form submission.
+     *
+     * Listens to `eff_after_submission` hook from ACF Forms Frontend Creator.
+     * Checks if user notifications are enabled for the CPT, extracts the email
+     * from the submitted data, processes placeholders, and sends the email.
+     *
+     * @param int    $post_id        Post ID of the newly created submission
+     * @param string $post_type      CPT slug
+     * @param array  $submitted_data Sanitized form data [field_name => value]
+     */
+    public static function on_after_submission(int $post_id, string $post_type, array $submitted_data): void {
+        if (!class_exists('Formularios_User_Notification_Settings') || !class_exists('Formularios_User_Notification_Helper')) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log("Formularios Admin: Notification classes not available; skipping user notification for post_type={$post_type}");
+            }
+            return;
+        }
+
+        // Check if notifications are enabled for this CPT
+        if (!Formularios_User_Notification_Settings::is_enabled($post_type)) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log("Formularios Admin: Notifications disabled for post_type={$post_type}");
+            }
+            return;
+        }
+
+        $settings = Formularios_User_Notification_Settings::get_for($post_type);
+
+        // Provide sensible fallbacks for subject/body when admin left them empty
+        $subject_fallback = __('Confirmación de registro en {site_name}', 'formularios-admin');
+        $body_fallback    = '<p>' . __('Gracias por tu envío en {site_name}.', 'formularios-admin') . '</p>';
+
+        $subject  = trim((string) ($settings['subject'] ?? '')) ?: $subject_fallback;
+        $body_html = trim((string) ($settings['body_html'] ?? '')) ?: $body_fallback;
+
+        if (empty($settings['email_field'])) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log("Formularios Admin: No email_field configured for post_type={$post_type}; skipping user notification");
+            }
+            return;
+        }
+
+        // Extract email from submitted data
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log("Formularios Admin: Extracting email from field '{$settings['email_field']}' (submitted keys: " . implode(', ', array_keys($submitted_data)) . ")");
+        }
+
+        $to_email = Formularios_User_Notification_Helper::extract_email($settings['email_field'], $submitted_data);
+        if ($to_email === '') {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log(sprintf("Formularios Admin: Could not extract valid email from field '%s' for post_type=%s", $settings['email_field'], $post_type));
+            }
+            return;
+        }
+
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log("Formularios Admin: Extracted email: {$to_email}");
+        }
+
+        // Process placeholders in subject and body
+        $subject  = Formularios_User_Notification_Helper::process_placeholders($subject, $post_id, $submitted_data);
+        $body_html = Formularios_User_Notification_Helper::process_placeholders($body_html, $post_id, $submitted_data);
+
+        // Send email and log result
+        $sent = Formularios_User_Notification_Helper::send_notification_email($to_email, $subject, $body_html);
     }
 }

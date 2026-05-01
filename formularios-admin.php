@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Formularios Admin (Dinámico)
  * Description: Crea el menú "Formularios" y organiza automáticamente los CPT personalizados dentro de él.
- * Version: 1.3.5
+ * Version: 1.4.0
  * Author: @pedrozopayares - Impactos
  */
 
@@ -25,6 +25,13 @@ new Formularios_Form_Settings_Page();
 
 // Register configured ACF fields as admin list columns after CPTs are loaded.
 add_action('admin_init', ['Formularios_Form_Settings', 'register_list_columns'], 20);
+
+// ── User Notification Emails (per-CPT) ──────────────────
+require_once __DIR__ . '/includes/class-user-notification-settings.php';
+require_once __DIR__ . '/includes/class-user-notification-helper.php';
+require_once __DIR__ . '/includes/class-user-notification-page.php';
+
+new Formularios_User_Notification_Page();
 
 // ── Import Feature ──────────────────────────────────────
 require_once __DIR__ . '/includes/class-import-handler.php';
