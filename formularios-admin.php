@@ -586,7 +586,7 @@ add_shortcode('formularios_verificados', function (array $atts = []): string {
         $query->the_post();
         $pid = get_the_ID();
         echo '<tr style="border-bottom:1px solid #e0e0e0">';
-        echo '<td style="padding:8px 12px"><a href="' . esc_url(get_permalink()) . '">' . esc_html(get_the_title()) . '</a></td>';
+        echo '<td style="padding:8px 12px">' . esc_html(get_the_title()) . '</td>';
         foreach ($display_fields as $field) {
             $value = get_field($field['name'], $pid);
             $display = formularios_format_field_value($value, $field);
