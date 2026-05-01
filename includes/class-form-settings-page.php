@@ -144,6 +144,7 @@ class Formularios_Form_Settings_Page {
                     $n_fields  = count($fields);
                     $n_export  = count($settings['export_fields']);
                     $n_columns = count($settings['list_columns']);
+                    $rad       = $settings['radicado'];
                 ?>
                 <details class="ff-cpt-block" data-cpt="<?php echo esc_attr($slug); ?>">
                     <summary>
@@ -159,6 +160,9 @@ class Formularios_Form_Settings_Page {
                         ?></span>
                         <?php if ($settings['public_export']): ?>
                             <span class="ff-badge ff-on"><?php esc_html_e('Público', 'formularios-admin'); ?></span>
+                        <?php endif; ?>
+                        <?php if ($rad['enabled']): ?>
+                            <span class="ff-badge ff-on"><?php esc_html_e('Radicado', 'formularios-admin'); ?></span>
                         <?php endif; ?>
                         <span class="ff-badge"><?php
                             printf(esc_html__('Excel: %d', 'formularios-admin'), (int) $n_export);
@@ -248,6 +252,83 @@ class Formularios_Form_Settings_Page {
                                 </div>
                             </div>
                         <?php endif; ?>
+
+                        <!-- Radicado settings -->
+                        <div class="ff-section" style="margin-top:10px;">
+                            <header>
+                                <strong><?php esc_html_e('Radicado automático', 'formularios-admin'); ?></strong>
+                            </header>
+                            <p class="description">
+                                <?php esc_html_e('Configura la generación automática del número de radicado al enviar el formulario.', 'formularios-admin'); ?>
+                            </p>
+                            <table class="form-table" style="margin:0;">
+                                <tr>
+                                    <th style="padding:4px 10px 4px 0;font-size:12px;width:160px;"><?php esc_html_e('Habilitado', 'formularios-admin'); ?></th>
+                                    <td style="padding:4px 0;">
+                                        <label>
+                                            <input type="checkbox"
+                                                   name="settings[<?php echo esc_attr($slug); ?>][radicado][enabled]"
+                                                   value="1"
+                                                   <?php checked($rad['enabled']); ?>>
+                                            <?php esc_html_e('Generar radicado automáticamente', 'formularios-admin'); ?>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th style="padding:4px 10px 4px 0;font-size:12px;"><?php esc_html_e('Prefijo', 'formularios-admin'); ?></th>
+                                    <td style="padding:4px 0;">
+                                        <input type="text"
+                                               name="settings[<?php echo esc_attr($slug); ?>][radicado][prefix]"
+                                               value="<?php echo esc_attr($rad['prefix']); ?>"
+                                               placeholder="PW"
+                                               style="width:100px;font-family:monospace;">
+                                        <span class="description" style="margin-left:6px;font-size:11px;"><?php esc_html_e('Solo letras, números, guiones y guiones bajos.', 'formularios-admin'); ?></span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th style="padding:4px 10px 4px 0;font-size:12px;"><?php esc_html_e('Formato de fecha', 'formularios-admin'); ?></th>
+                                    <td style="padding:4px 0;">
+                                        <select name="settings[<?php echo esc_attr($slug); ?>][radicado][date_format]" style="font-family:monospace;">
+                                            <?php
+                                            $date_options = [
+                                                'Y-m-d' => 'Y-m-d  (' . gmdate('Y-m-d') . ')',
+                                                'Ymd'   => 'Ymd    (' . gmdate('Ymd')   . ')',
+                                                'Y/m/d' => 'Y/m/d  (' . gmdate('Y/m/d') . ')',
+                                                'd-m-Y' => 'd-m-Y  (' . gmdate('d-m-Y') . ')',
+                                                'd/m/Y' => 'd/m/Y  (' . gmdate('d/m/Y') . ')',
+                                                'Y'     => 'Y      (' . gmdate('Y')     . ')',
+                                            ];
+                                            foreach ($date_options as $val => $label):
+                                            ?>
+                                                <option value="<?php echo esc_attr($val); ?>" <?php selected($rad['date_format'], $val); ?>><?php echo esc_html($label); ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                        <span class="description" style="margin-left:6px;font-size:11px;"><?php esc_html_e('Deja vacío para no incluir fecha.', 'formularios-admin'); ?></span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th style="padding:4px 10px 4px 0;font-size:12px;"><?php esc_html_e('Dígitos del consecutivo', 'formularios-admin'); ?></th>
+                                    <td style="padding:4px 0;">
+                                        <select name="settings[<?php echo esc_attr($slug); ?>][radicado][digits]">
+                                            <?php for ($d = 1; $d <= 8; $d++): ?>
+                                                <option value="<?php echo $d; ?>" <?php selected($rad['digits'], $d); ?>>
+                                                    <?php echo $d; ?> &nbsp;(<?php echo str_pad('1', $d, '0', STR_PAD_LEFT); ?>)
+                                                </option>
+                                            <?php endfor; ?>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th style="padding:4px 10px 4px 0;font-size:12px;"><?php esc_html_e('Vista previa', 'formularios-admin'); ?></th>
+                                    <td style="padding:4px 0;font-family:monospace;font-size:12px;color:#0073aa;">
+                                        <?php
+                                        $preview_parts = array_filter([$rad['prefix'], gmdate($rad['date_format']), str_pad('1', $rad['digits'], '0', STR_PAD_LEFT)]);
+                                        echo esc_html(implode('-', $preview_parts));
+                                        ?>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
                     </div>
                 </details>
                 <?php endforeach; ?>

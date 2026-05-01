@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Formularios Admin (Dinámico)
  * Description: Crea el menú "Formularios" y organiza automáticamente los CPT personalizados dentro de él.
- * Version: 1.4.2
+ * Version: 1.5.0
  * Author: @pedrozopayares - Impactos
  */
 
@@ -1110,7 +1110,7 @@ add_action('init', function () {
                 'label'        => 'Radicado',
                 'name'         => 'radicado',
                 'type'         => 'text',
-                'instructions' => 'Número de radicación (PW-YYYY-MM-DD-nnn). Generado automáticamente al enviar el formulario.',
+                'instructions' => 'Número de radicación. Generado automáticamente al enviar el formulario según la configuración del formulario.',
                 'required'     => 0,
                 'readonly'     => 1,
             ],
@@ -1138,24 +1138,30 @@ add_action('init', function () {
  * --------------------------------------------------------
  * 10. Auto-generar campos internos al enviar formulario
  *     Escucha el hook de acf-forms-frontend-creator.
- *     CPTs con radicado generan PW-{fecha}-{consecutivo}.
- *     Todos reciben codigo_legacy y fecha_registro_original.
+ *     El radicado se genera según la configuración por CPT
+ *     (habilitado, prefijo, formato de fecha, dígitos del consecutivo).
  *     Prioridad 5: debe ejecutarse ANTES del bridge (prioridad 10)
  *     para que el radicado esté disponible en el email de notificación.
  * --------------------------------------------------------
  */
 add_action('eff_after_submission', function (int $post_id, string $post_type, array $sanitized) {
-    // Solo procesar CPTs gestionados por este plugin
     if (!formularios_es_cpt_formulario($post_type)) {
         return;
     }
 
-    // Reutilizar el consecutivo ya generado por acf-forms-frontend-creator
     $consecutive = (int) get_option('eff_consecutive_' . $post_type, 1);
 
     update_field('codigo_legacy', $consecutive, $post_id);
     update_field('fecha_registro_original', current_time('Y-m-d H:i:s'), $post_id);
 
-    $radicado = 'PW-' . gmdate('Y-m-d') . '-' . str_pad($consecutive, 3, '0', STR_PAD_LEFT);
-    update_field('radicado', $radicado, $post_id);
+    $rad = Formularios_Form_Settings::get_radicado_settings($post_type);
+    if ($rad['enabled']) {
+        $parts = array_filter([
+            $rad['prefix'],
+            $rad['date_format'] !== '' ? gmdate($rad['date_format']) : '',
+            str_pad((string) $consecutive, $rad['digits'], '0', STR_PAD_LEFT),
+        ]);
+        $radicado = implode('-', $parts);
+        update_field('radicado', $radicado, $post_id);
+    }
 }, 5, 3);

@@ -1,15 +1,21 @@
 <?php
 /**
- * Per-CPT form settings: public export toggle, exportable fields, and
- * admin list columns.
+ * Per-CPT form settings: public export toggle, exportable fields,
+ * admin list columns, and radicado generation.
  *
  * Storage format (option `formularios_form_settings`):
  *
  *   [
  *     'organizacion-esal' => [
- *         'public_export' => true,              // show public download link
- *         'export_fields' => ['nit','municipio', ...], // empty = all visible
- *         'list_columns'  => ['nit','municipio'],      // empty = none
+ *         'public_export' => true,
+ *         'export_fields' => ['nit','municipio', ...],
+ *         'list_columns'  => ['nit','municipio'],
+ *         'radicado'      => [
+ *             'enabled'     => true,
+ *             'prefix'      => 'PW',
+ *             'date_format' => 'Y-m-d',
+ *             'digits'      => 3,
+ *         ],
  *     ],
  *     ...
  *   ]
@@ -34,25 +40,53 @@ class Formularios_Form_Settings {
     public static function get_for(string $post_type): array {
         $all = self::get_all();
         $row = $all[$post_type] ?? [];
+        $rad = isset($row['radicado']) && is_array($row['radicado']) ? $row['radicado'] : [];
         return [
             'public_export' => !empty($row['public_export']),
             'export_fields' => isset($row['export_fields']) && is_array($row['export_fields']) ? array_values($row['export_fields']) : [],
             'list_columns'  => isset($row['list_columns'])  && is_array($row['list_columns'])  ? array_values($row['list_columns'])  : [],
+            'radicado'      => [
+                'enabled'     => !array_key_exists('enabled', $rad) || !empty($rad['enabled']),
+                'prefix'      => isset($rad['prefix'])      ? (string) $rad['prefix']      : 'PW',
+                'date_format' => isset($rad['date_format']) ? (string) $rad['date_format'] : 'Y-m-d',
+                'digits'      => isset($rad['digits'])      ? (int)    $rad['digits']      : 3,
+            ],
         ];
     }
 
     public static function save_all(array $data): void {
+        $allowed_date_formats = ['Y-m-d', 'Ymd', 'Y/m/d', 'd-m-Y', 'd/m/Y', 'Y'];
         $clean = [];
         foreach ($data as $pt => $row) {
             $pt = sanitize_key($pt);
             if ($pt === '') continue;
+            $rad = isset($row['radicado']) && is_array($row['radicado']) ? $row['radicado'] : [];
+            $digits = max(1, min(8, (int) ($rad['digits'] ?? 3)));
+            $date_fmt = in_array($rad['date_format'] ?? '', $allowed_date_formats, true)
+                ? $rad['date_format']
+                : 'Y-m-d';
             $clean[$pt] = [
                 'public_export' => !empty($row['public_export']),
                 'export_fields' => array_values(array_filter(array_map('sanitize_key', (array) ($row['export_fields'] ?? [])))),
                 'list_columns'  => array_values(array_filter(array_map('sanitize_key', (array) ($row['list_columns']  ?? [])))),
+                'radicado'      => [
+                    'enabled'     => !empty($rad['enabled']),
+                    'prefix'      => strtoupper(preg_replace('/[^A-Za-z0-9\-_]/', '', (string) ($rad['prefix'] ?? 'PW'))),
+                    'date_format' => $date_fmt,
+                    'digits'      => $digits,
+                ],
             ];
         }
         update_option(self::OPTION_KEY, $clean, false);
+    }
+
+    /**
+     * Return radicado generation settings for a CPT.
+     *
+     * @return array{enabled:bool,prefix:string,date_format:string,digits:int}
+     */
+    public static function get_radicado_settings(string $post_type): array {
+        return self::get_for($post_type)['radicado'];
     }
 
     /**
