@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Formularios Admin (Dinámico)
  * Description: Crea el menú "Formularios" y organiza automáticamente los CPT personalizados dentro de él.
- * Version: 1.4.0
+ * Version: 1.4.1
  * Author: @pedrozopayares - Impactos
  */
 
